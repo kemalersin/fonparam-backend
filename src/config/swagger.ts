@@ -4,12 +4,12 @@ const options: swaggerJsdoc.Options = {
     definition: {
         openapi: '3.0.0',
         info: {
-            title: 'Fonparam API',
+            title: 'FonParam API',
             version: '1.0.0',
             description: `
-# Fonparam REST API Dökümantasyonu
+# FonParam REST API Dökümantasyonu
 
-Fonparam, Türkiye'deki yatırım fonlarının verilerini sunan bir API servisidir. 
+FonParam, Türkiye'deki yatırım fonlarının verilerini sunan bir API servisidir. 
 Bu API ile fonların güncel ve geçmiş verilerine erişebilir, karşılaştırmalar yapabilir ve detaylı analizler gerçekleştirebilirsiniz.
 
 ## Özellikler
@@ -22,20 +22,24 @@ Bu API ile fonların güncel ve geçmiş verilerine erişebilir, karşılaştır
 
 ## Rate Limiting
 
-- Genel istekler: 100 istek/dakika
-- Geçmiş veri istekleri: 50 istek/dakika
-- Karşılaştırma istekleri: 30 istek/dakika
-- Her endpoint için 15 dakikada maksimum 25 istek
-- Her endpoint için günlük maksimum 100 istek
+API'nin tüm endpointleri için rate limiting uygulanmaktadır:
+
+- Her endpoint için 15 dakikada maksimum 25 istek yapılabilir
+- Her endpoint için günlük maksimum 100 istek yapılabilir
 - Rate limit aşıldığında 429 (Too Many Requests) hatası döner
 - Rate limit sayaçları IP bazlı tutulur
+- Whitelist'teki IP ve domain'ler rate limit'ten etkilenmez
 
 ## Önbellek (Cache)
+
+Performansı artırmak için önbellek kullanılmaktadır:
 
 - Fon listesi: 5 dakika
 - Fon detayı: 10 dakika
 - Geçmiş veriler: 30 dakika
 - Karşılaştırma: 5 dakika
+- Şirket listesi: 5 dakika
+- Şirket detayı: 10 dakika
             `,
             contact: {
                 name: 'API Desteği',
