@@ -25,6 +25,10 @@ Bu API ile fonların güncel ve geçmiş verilerine erişebilir, karşılaştır
 - Genel istekler: 100 istek/dakika
 - Geçmiş veri istekleri: 50 istek/dakika
 - Karşılaştırma istekleri: 30 istek/dakika
+- Her endpoint için 15 dakikada maksimum 25 istek
+- Her endpoint için günlük maksimum 100 istek
+- Rate limit aşıldığında 429 (Too Many Requests) hatası döner
+- Rate limit sayaçları IP bazlı tutulur
 
 ## Önbellek (Cache)
 

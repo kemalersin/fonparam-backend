@@ -9,6 +9,15 @@ Fonparam, Türkiye'deki yatırım fonlarının verilerini sunan bir API servisid
 - Fonların karşılaştırmalı analizi
 - Performans istatistikleri ve getiri oranları
 
+## Rate Limiting
+
+API'nin tüm endpointleri için rate limiting uygulanmaktadır:
+
+- Her endpoint için 15 dakikada maksimum 25 istek
+- Her endpoint için günlük maksimum 100 istek
+- Rate limit aşıldığında 429 (Too Many Requests) hatası döner
+- Rate limit sayaçları IP bazlı tutulur
+
 ## Kurulum
 
 1. Repoyu klonlayın:
