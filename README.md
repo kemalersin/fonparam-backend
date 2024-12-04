@@ -13,7 +13,7 @@ Fonparam, Türkiye'deki yatırım fonlarının verilerini sunan bir API servisid
 
 1. Repoyu klonlayın:
 ```bash
-git clone [repo_url]
+git clone git@github.com:kemalersin/fonparam-backend.git
 cd fonparam-backend
 ```
 
