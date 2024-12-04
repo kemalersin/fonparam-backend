@@ -1,7 +1,7 @@
 {
   "name": "fonparam-backend",
   "version": "1.0.0",
-  "description": "Fonparam API Backend",
+  "description": "FonParam API Backend",
   "main": "dist/app.js",
   "scripts": {
     "start": "node dist/app.js",

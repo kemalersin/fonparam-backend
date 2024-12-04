@@ -19,7 +19,7 @@ app.use(express.json());
 // Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs, {
     customCss: '.swagger-ui .topbar { display: none }',
-    customSiteTitle: "Fonparam API Dokümantasyonu"
+    customSiteTitle: "FonParam API Dokümantasyonu"
 }));
 
 // Routes

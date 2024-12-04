@@ -1,6 +1,6 @@
-# Fonparam API
+# FonParam API
 
-Fonparam, Türkiye'deki yatırım fonlarının verilerini sunan bir API servisidir.
+FonParam, Türkiye'deki yatırım fonlarının verilerini sunan bir API servisidir.
 
 ## Özellikler
 
