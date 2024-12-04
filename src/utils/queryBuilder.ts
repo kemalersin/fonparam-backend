@@ -1,88 +1,79 @@
-import { Op, WhereOptions } from 'sequelize';
+import { Op, WhereOptions, literal } from 'sequelize';
 import { CompanyFilters, FundFilters } from '../types';
-import { FundYield } from '../models';
-import sequelize from '../config/database';
-import { literal } from 'sequelize';
 
-interface Filters {
+// Tip tanımlamaları
+interface BaseFilters {
     where: Record<string, any>;
-    order?: [string, string][];
     limit?: number;
     offset?: number;
 }
 
-interface HistoricalFilters {
+interface HistoricalFilters extends BaseFilters {
     where: {
         date?: {
             [Op.gte]?: string;
             [Op.lte]?: string;
         };
+        [Op.and]?: any[];
     };
 }
 
-export const buildFundFilters = (query: FundFilters) => {
-    const where: WhereOptions = {};
-    const limit = parseInt(query.limit?.toString() || '20');
-    const offset = (parseInt(query.page?.toString() || '1') - 1) * limit;
+// Yardımcı fonksiyonlar
+const calculatePagination = (page?: string, limit?: string) => {
+    const perPage = parseInt(limit?.toString() || '20');
+    const offset = (parseInt(page?.toString() || '1') - 1) * perPage;
+    return { limit: perPage, offset };
+};
+
+const buildSearchFilter = (search: string) => ({
+    [Op.or]: [
+        { code: { [Op.like]: `%${search}%` } },
+        { title: { [Op.like]: `%${search}%` } }
+    ]
+});
+
+const buildYieldFilter = (field: string, min?: string, max?: string) => {
+    if (!min && !max) return null;
+
+    const filter: Record<symbol, number> = {};
+    if (min) filter[Op.gte] = parseFloat(min);
+    if (max) filter[Op.lte] = parseFloat(max);
+    return filter;
+};
+
+// Ana fonksiyonlar
+export const buildFundFilters = (query: FundFilters): BaseFilters => {
+    let where: WhereOptions<any> & Record<string, any> = {};
+    const { limit, offset } = calculatePagination(query.page, query.limit);
 
     // Temel filtreler
-    if (query.type) {
-        where.type = query.type;
-    }
-
-    if (query.management_company) {
-        where.management_company_id = query.management_company;
-    }
-
-    if (query.tefas !== undefined) {
-        where.tefas = query.tefas === 'true';
-    }
-
-    if (query.code) {
-        where.code = {
-            [Op.like]: `%${query.code}%`
-        };
-    }
+    if (query.type) where.type = query.type;
+    if (query.management_company) where.management_company_id = query.management_company;
+    if (query.tefas !== undefined) where.tefas = query.tefas === 'true';
+    if (query.code) where.code = { [Op.like]: `%${query.code}%` };
 
     // Getiri filtreleri
-    const yieldFields = ['yield_1m', 'yield_3m', 'yield_6m', 'yield_ytd', 'yield_1y', 'yield_3y', 'yield_5y'];
-    yieldFields.forEach(field => {
-        const min = query[`min_${field}`];
-        const max = query[`max_${field}`];
-        if (min || max) {
-            where[field] = {};
-            if (min) where[field][Op.gte] = parseFloat(min as string);
-            if (max) where[field][Op.lte] = parseFloat(max as string);
-        }
+    ['yield_1m', 'yield_3m', 'yield_6m', 'yield_ytd', 'yield_1y', 'yield_3y', 'yield_5y'].forEach(field => {
+        const filter = buildYieldFilter(field, query[`min_${field}`] as string, query[`max_${field}`] as string);
+        if (filter) where[field] = filter;
     });
 
     // Arama filtresi
     if (query.search) {
-        where[Op.or] = [
-            { code: { [Op.like]: `%${query.search}%` } },
-            { title: { [Op.like]: `%${query.search}%` } }
-        ];
+        where = { ...where, ...buildSearchFilter(query.search) };
     }
 
-    return {
-        where,
-        limit,
-        offset
-    };
+    return { where, limit, offset };
 };
 
-export const buildHistoricalValueFilters = (query: any) => {
-    const where: WhereOptions = {};
+export const buildHistoricalValueFilters = (query: { start_date?: string; end_date?: string; interval?: string }): HistoricalFilters => {
+    const where: HistoricalFilters['where'] = {};
 
     // Tarih filtreleri
     if (query.start_date || query.end_date) {
         where.date = {};
-        if (query.start_date) {
-            where.date[Op.gte] = query.start_date;
-        }
-        if (query.end_date) {
-            where.date[Op.lte] = query.end_date;
-        }
+        if (query.start_date) where.date[Op.gte] = query.start_date;
+        if (query.end_date) where.date[Op.lte] = query.end_date;
     }
 
     // Interval filtresi
@@ -99,70 +90,10 @@ export const buildHistoricalValueFilters = (query: any) => {
                 GROUP BY code, DATE_FORMAT(date, '%Y-%m')
             `;
 
-        where[Op.and as any] = [
+        where[Op.and] = [
             literal(`(code, date) IN (${subQuery})`)
         ];
     }
 
     return { where };
-};
-
-export const buildCompanyFilters = (query: CompanyFilters) => {
-    const where: any = {};
-    const page = parseInt(query.page?.toString() || '1');
-    const limit = parseInt(query.limit?.toString() || '20');
-    const offset = (page - 1) * limit;
-
-    // Arama filtresi
-    if (query.search) {
-        where[Op.or] = [
-            { code: { [Op.like]: `%${query.search}%` } },
-            { title: { [Op.like]: `%${query.search}%` } }
-        ];
-    }
-
-    // Sıralama
-    let order: any[] = [['title', 'ASC']];
-    if (query.sort) {
-        order = [[query.sort, query.order || 'ASC']];
-    }
-
-    return {
-        where,
-        order,
-        limit,
-        offset,
-        include: [{
-            model: FundYield,
-            attributes: ['yield_1m', 'yield_1y'],
-            required: false
-        }],
-        group: ['FundManagementCompany.code'],
-        having: sequelize.literal(buildCompanyHavingClause(query))
-    };
-};
-
-const buildCompanyHavingClause = (query: CompanyFilters): string => {
-    const conditions: string[] = [];
-
-    if (query.min_total_funds) {
-        conditions.push(`COUNT(FundYield.code) >= ${query.min_total_funds}`);
-    }
-    if (query.max_total_funds) {
-        conditions.push(`COUNT(FundYield.code) <= ${query.max_total_funds}`);
-    }
-    if (query.min_avg_yield_1m) {
-        conditions.push(`AVG(FundYield.yield_1m) >= ${query.min_avg_yield_1m}`);
-    }
-    if (query.max_avg_yield_1m) {
-        conditions.push(`AVG(FundYield.yield_1m) <= ${query.max_avg_yield_1m}`);
-    }
-    if (query.min_avg_yield_1y) {
-        conditions.push(`AVG(FundYield.yield_1y) >= ${query.min_avg_yield_1y}`);
-    }
-    if (query.max_avg_yield_1y) {
-        conditions.push(`AVG(FundYield.yield_1y) <= ${query.max_avg_yield_1y}`);
-    }
-
-    return conditions.length ? conditions.join(' AND ') : '1=1';
 }; 
