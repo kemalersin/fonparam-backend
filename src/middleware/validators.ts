@@ -183,4 +183,38 @@ export const validateComparisonRequest = [
             return true;
         }),
     validate
+];
+
+export const validateAnalysisRequest = [
+    param('code')
+        .isString()
+        .trim()
+        .isLength({ min: 2, max: 10 })
+        .withMessage('Fon kodu 2-10 karakter uzunluğunda olmalıdır'),
+    query('startDate')
+        .isIn(['5_years_ago', '3_years_ago', '1_year_ago', 'year_start', '6_months_ago', '3_months_ago', '1_month_ago'])
+        .withMessage('Geçersiz başlangıç tarihi'),
+    query('initialInvestment')
+        .isFloat({ min: 0 })
+        .withMessage('Başlangıç yatırımı 0 veya daha büyük olmalıdır'),
+    query('monthlyInvestment')
+        .isFloat({ min: 0.01 })
+        .withMessage('Aylık yatırım 0\'dan büyük olmalıdır'),
+    query('yearlyIncrease.type')
+        .isIn(['percentage', 'amount'])
+        .withMessage('Geçersiz yıllık artış tipi'),
+    query('yearlyIncrease.value')
+        .isFloat({ min: 0 })
+        .withMessage('Yıllık artış değeri 0 veya daha büyük olmalıdır'),
+    query('includeMonthlyDetails')
+        .optional()
+        .isBoolean()
+        .withMessage('Aylık detaylar boolean olmalıdır'),
+    (req: Request, res: Response, next: NextFunction) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+        next();
+    }
 ]; 

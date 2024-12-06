@@ -36,6 +36,7 @@ Performansı artırmak için önbellek kullanılmaktadır:
 
 - Fon listesi: 5 dakika
 - Fon detayı: 10 dakika
+- Fon analizi: 30 dakika
 - Geçmiş veriler: 30 dakika
 - Karşılaştırma: 5 dakika
 - Şirket listesi: 5 dakika
@@ -180,8 +181,11 @@ Performansı artırmak için önbellek kullanılmaktadır:
                             required: true,
                             description: 'Şirket kodu',
                             schema: {
-                                type: 'string'
-                            }
+                                type: 'string',
+                                minLength: 2,
+                                maxLength: 10
+                            },
+                            example: 'APY'
                         },
                         {
                             name: 'include_funds',
@@ -190,7 +194,8 @@ Performansı artırmak için önbellek kullanılmaktadır:
                             schema: {
                                 type: 'boolean',
                                 default: true
-                            }
+                            },
+                            example: true
                         }
                     ],
                     responses: {
@@ -210,9 +215,9 @@ Performansı artırmak için önbellek kullanılmaktadır:
                                         },
                                         example: {
                                             company: {
-                                                code: 'AK',
-                                                title: 'Ak Portföy Yönetimi A.Ş.',
-                                                logo: 'https://example.com/logo.png'
+                                                code: 'APY',
+                                                title: 'ATA PORTFÖY YÖNETİMİ A.Ş.',
+                                                logo: 'ata_portfoy_icon.png'
                                             },
                                             stats: {
                                                 total_funds: 42,
@@ -224,99 +229,14 @@ Performansı artırmak için önbellek kullanılmaktadır:
                                                 avg_yield_5y: 156.78,
                                                 best_performing_funds: [
                                                     {
-                                                        code: 'AK1',
-                                                        title: 'Ak Portföy Birinci Fon',
+                                                        code: 'AAK',
+                                                        title: 'ATA PORTFÖY ÇOKLU VARLIK DEĞİŞKEN FONU',
                                                         type: 'Hisse Senedi',
                                                         yield_1m: 3.45,
                                                         yield_1y: 32.45
                                                     }
                                                 ]
                                             }
-                                        }
-                                    }
-                                }
-                            }
-                        },
-                        '404': {
-                            $ref: '#/components/responses/NotFound'
-                        },
-                        '500': {
-                            $ref: '#/components/responses/ValidationError'
-                        }
-                    }
-                }
-            },
-            '/funds/{code}/historical': {
-                get: {
-                    tags: ['Fonlar'],
-                    summary: 'Fonun geçmiş değerlerini getirir',
-                    description: 'Belirtilen fonun geçmiş birim pay değerlerini getirir',
-                    parameters: [
-                        {
-                            name: 'code',
-                            in: 'path',
-                            description: 'Fon kodu',
-                            required: true,
-                            schema: {
-                                type: 'string'
-                            }
-                        },
-                        {
-                            name: 'start_date',
-                            in: 'query',
-                            description: 'Başlangıç tarihi (YYYY-MM-DD)',
-                            schema: {
-                                type: 'string',
-                                format: 'date'
-                            }
-                        },
-                        {
-                            name: 'end_date',
-                            in: 'query',
-                            description: 'Bitiş tarihi (YYYY-MM-DD)',
-                            schema: {
-                                type: 'string',
-                                format: 'date'
-                            }
-                        },
-                        {
-                            name: 'interval',
-                            in: 'query',
-                            description: 'Veri aralığı',
-                            schema: {
-                                type: 'string',
-                                enum: ['daily', 'weekly', 'monthly']
-                            }
-                        },
-                        {
-                            name: 'sort',
-                            in: 'query',
-                            description: 'Sıralama alanı',
-                            schema: {
-                                type: 'string',
-                                enum: ['date', 'value'],
-                                default: 'date'
-                            }
-                        },
-                        {
-                            name: 'order',
-                            in: 'query',
-                            description: 'Sıralama yönü',
-                            schema: {
-                                type: 'string',
-                                enum: ['ASC', 'DESC']
-                            }
-                        }
-                    ],
-                    responses: {
-                        '200': {
-                            description: 'Başarılı',
-                            content: {
-                                'application/json': {
-                                    schema: {
-                                        type: 'array',
-                                        items: {
-                                            $ref: '#/components/schemas/FundHistoricalValue'
                                         }
                                     }
                                 }
@@ -375,7 +295,7 @@ Performansı artırmak için önbellek kullanılmaktadır:
                                 type: 'string',
                                 pattern: '^[A-Z0-9]+$'
                             },
-                            example: 'AFT'
+                            example: 'AAK'
                         },
                         {
                             name: 'management_company',
@@ -440,12 +360,12 @@ Performansı artırmak için önbellek kullanılmaktadır:
                             name: 'codes',
                             in: 'query',
                             required: true,
-                            description: 'Karşılaştırılacak fon kodları (virgülle ayrılmış, örn: AK1,IYB2)',
+                            description: 'Karşılaştırılacak fon kodları (virgülle ayrılmış, örn: AAK,GPB)',
                             schema: {
                                 type: 'string',
                                 pattern: '^[A-Z0-9]+(,[A-Z0-9]+)*$'
                             },
-                            example: 'AK1,IYB2'
+                            example: 'AAK,GPB'
                         }
                     ],
                     responses: {
@@ -493,7 +413,7 @@ Performansı artırmak için önbellek kullanılmaktadır:
                                                 type: 'array',
                                                 items: {
                                                     type: 'string',
-                                                    example: ['AK1']
+                                                    example: ['AAK']
                                                 }
                                             }
                                         }
@@ -506,7 +426,321 @@ Performansı artırmak için önbellek kullanılmaktadır:
                         }
                     }
                 }
-            }
+            },
+            '/funds/{code}/analyze': {
+                get: {
+                    tags: ['Fonlar'],
+                    summary: 'Fon için yatırım analizi yapar',
+                    description: 'Belirtilen fon için başlangıç yatırımı ve aylık düzenli yatırım ile getiri analizi yapar',
+                    parameters: [
+                        {
+                            in: 'path',
+                            name: 'code',
+                            required: true,
+                            schema: {
+                                type: 'string'
+                            },
+                            description: 'Fon kodu',
+                            example: 'AAK'
+                        },
+                        {
+                            in: 'query',
+                            name: 'startDate',
+                            required: true,
+                            schema: {
+                                type: 'string',
+                                enum: ['5_years_ago', '3_years_ago', '1_year_ago', 'year_start', '6_months_ago', '3_months_ago', '1_month_ago']
+                            },
+                            description: 'Başlangıç tarihi',
+                            example: '5_years_ago'
+                        },
+                        {
+                            in: 'query',
+                            name: 'initialInvestment',
+                            required: true,
+                            schema: {
+                                type: 'number',
+                                minimum: 0
+                            },
+                            description: 'Başlangıç yatırımı',
+                            example: 10000
+                        },
+                        {
+                            in: 'query',
+                            name: 'monthlyInvestment',
+                            required: true,
+                            schema: {
+                                type: 'number',
+                                minimum: 0
+                            },
+                            description: 'Aylık düzenli yatırım',
+                            example: 1000
+                        },
+                        {
+                            in: 'query',
+                            name: 'yearlyIncrease.type',
+                            required: true,
+                            schema: {
+                                type: 'string',
+                                enum: ['percentage', 'amount']
+                            },
+                            description: 'Yıllık artış tipi',
+                            example: 'percentage'
+                        },
+                        {
+                            in: 'query',
+                            name: 'yearlyIncrease.value',
+                            required: true,
+                            schema: {
+                                type: 'number',
+                                minimum: 0
+                            },
+                            description: 'Yıllık artış değeri',
+                            example: 20
+                        },
+                        {
+                            in: 'query',
+                            name: 'includeMonthlyDetails',
+                            required: false,
+                            schema: {
+                                type: 'boolean'
+                            },
+                            description: 'Aylık detayları dahil et',
+                            example: true
+                        }
+                    ],
+                    responses: {
+                        '200': {
+                            description: 'Başarılı',
+                            content: {
+                                'application/json': {
+                                    schema: {
+                                        type: 'object',
+                                        required: ['code', 'management_company_id', 'title', 'summary'],
+                                        properties: {
+                                            code: {
+                                                type: 'string',
+                                                example: 'AAK',
+                                                description: 'Fon kodu'
+                                            },
+                                            management_company_id: {
+                                                type: 'string',
+                                                description: 'Portföy yönetim şirketi kodu',
+                                                example: 'APY'
+                                            },
+                                            title: {
+                                                type: 'string',
+                                                description: 'Fon adı',
+                                                example: 'ATA PORTFÖY ÇOKLU VARLIK DEĞİŞKEN FONU'
+                                            },
+                                            summary: {
+                                                type: 'object',
+                                                required: ['totalInvestment', 'currentValue', 'totalYield', 'totalYieldPercentage'],
+                                                properties: {
+                                                    totalInvestment: {
+                                                        type: 'number',
+                                                        description: 'Toplam yatırılan para',
+                                                        example: 100000
+                                                    },
+                                                    currentValue: {
+                                                        type: 'number',
+                                                        description: 'Güncel değer',
+                                                        example: 100000
+                                                    },
+                                                    totalYield: {
+                                                        type: 'number',
+                                                        description: 'Toplam getiri (tutar)',
+                                                        example: 100000
+                                                    },
+                                                    totalYieldPercentage: {
+                                                        type: 'number',
+                                                        description: 'Toplam getiri (%)',
+                                                        example: 10
+                                                    }
+                                                }
+                                            },
+                                            monthlyDetails: {
+                                                type: 'array',
+                                                description: 'Aylık detaylar (includeMonthlyDetails=true ise)',
+                                                items: {
+                                                    type: 'object',
+                                                    required: ['date', 'investment', 'totalInvestment', 'unitPrice', 'units', 'totalUnits', 'value', 'yield', 'yieldPercentage'],
+                                                    properties: {
+                                                        date: {
+                                                            type: 'string',
+                                                            format: 'date',
+                                                            description: 'Tarih',
+                                                            example: '2024-01-01'
+                                                        },
+                                                        investment: {
+                                                            type: 'number',
+                                                            description: 'O ay yapılan yatırım',
+                                                            example: 1000
+                                                        },
+                                                        totalInvestment: {
+                                                            type: 'number',
+                                                            description: 'O ana kadar yapılan toplam yatırım',
+                                                            example: 10000
+                                                        },
+                                                        unitPrice: {
+                                                            type: 'number',
+                                                            description: 'Fon birim fiyatı',
+                                                            example: 10
+                                                        },
+                                                        units: {
+                                                            type: 'number',
+                                                            description: 'O ay alınan pay adedi',
+                                                            example: 100
+                                                        },
+                                                        totalUnits: {
+                                                            type: 'number',
+                                                            description: 'Toplam pay adedi',
+                                                            example: 1000
+                                                        },
+                                                        value: {
+                                                            type: 'number',
+                                                            description: 'Yatırımın o ayki değeri',
+                                                            example: 10000
+                                                        },
+                                                        yield: {
+                                                            type: 'number',
+                                                            description: 'O ayki getiri (tutar)',
+                                                            example: 100
+                                                        },
+                                                        yieldPercentage: {
+                                                            type: 'number',
+                                                            description: 'O ayki getiri (%)',
+                                                            example: 10
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        '400': {
+                            description: 'Geçersiz parametreler'
+                        },
+                        '404': {
+                            description: 'Fon bulunamadı'
+                        },
+                        '500': {
+                            description: 'Sunucu hatası'
+                        }
+                    }
+                }
+            },
+            '/funds/{code}/historical': {
+                get: {
+                    tags: ['Fonlar'],
+                    summary: 'Fonun geçmiş değerlerini getirir',
+                    description: 'Belirtilen fonun geçmiş birim pay değerlerini getirir',
+                    parameters: [
+                        {
+                            name: 'code',
+                            in: 'path',
+                            description: 'Fon kodu',
+                            required: true,
+                            schema: {
+                                type: 'string',
+                                minLength: 2,
+                                maxLength: 10
+                            },
+                            example: 'AAK'
+                        },
+                        {
+                            name: 'start_date',
+                            in: 'query',
+                            description: 'Başlangıç tarihi (YYYY-MM-DD)',
+                            schema: {
+                                type: 'string',
+                                format: 'date',
+                                default: '2023-01-01'
+                            },
+                            example: '2023-01-01'
+                        },
+                        {
+                            name: 'end_date',
+                            in: 'query',
+                            description: 'Bitiş tarihi (YYYY-MM-DD)',
+                            schema: {
+                                type: 'string',
+                                format: 'date',
+                                default: '2023-12-31'
+                            },
+                            example: '2023-12-31'
+                        },
+                        {
+                            name: 'interval',
+                            in: 'query',
+                            description: 'Veri aralığı',
+                            schema: {
+                                type: 'string',
+                                enum: ['daily', 'weekly', 'monthly'],
+                                default: 'daily'
+                            },
+                            example: 'daily'
+                        },
+                        {
+                            name: 'sort',
+                            in: 'query',
+                            description: 'Sıralama alanı',
+                            schema: {
+                                type: 'string',
+                                enum: ['date', 'value'],
+                                default: 'date'
+                            },
+                            example: 'date'
+                        },
+                        {
+                            name: 'order',
+                            in: 'query',
+                            description: 'Sıralama yönü',
+                            schema: {
+                                type: 'string',
+                                enum: ['ASC', 'DESC'],
+                                default: 'DESC'
+                            },
+                            example: 'DESC'
+                        }
+                    ],
+                    responses: {
+                        '200': {
+                            description: 'Başarılı',
+                            content: {
+                                'application/json': {
+                                    schema: {
+                                        type: 'array',
+                                        items: {
+                                            $ref: '#/components/schemas/FundHistoricalValue'
+                                        },
+                                        example: [
+                                            {
+                                                code: 'AAK',
+                                                date: '2023-12-31',
+                                                value: 12.345
+                                            },
+                                            {
+                                                code: 'AAK',
+                                                date: '2023-12-30',
+                                                value: 12.123
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        },
+                        '404': {
+                            $ref: '#/components/responses/NotFound'
+                        },
+                        '500': {
+                            $ref: '#/components/responses/ValidationError'
+                        }
+                    }
+                }
+            },
         },
         components: {
             schemas: {
@@ -562,14 +796,14 @@ Performansı artırmak için önbellek kullanılmaktadır:
                         title: {
                             type: 'string',
                             description: 'Şirket adı',
-                            example: 'Ak Portföy Yönetimi A.Ş.',
+                            example: 'ATA PORTFÖY YÖNETİMİ A.Ş.',
                             minLength: 3,
                             maxLength: 100
                         },
                         logo: {
                             type: 'string',
                             description: 'Şirket logosu URL',
-                            example: 'https://example.com/logo.png',
+                            example: 'ata_portfoy_icon.png',
                             format: 'uri'
                         }
                     }
@@ -581,21 +815,21 @@ Performansı artırmak için önbellek kullanılmaktadır:
                         code: {
                             type: 'string',
                             description: 'Fon kodu',
-                            example: 'AK1',
+                            example: 'AAK',
                             minLength: 2,
                             maxLength: 10
                         },
                         management_company_id: {
                             type: 'string',
                             description: 'Yönetim şirketi kodu',
-                            example: 'AK',
+                            example: 'APY',
                             minLength: 2,
                             maxLength: 10
                         },
                         title: {
                             type: 'string',
                             description: 'Fon adı',
-                            example: 'Ak Portföy Birinci Fon',
+                            example: 'ATA PORTFÖY ÇOKLU VARLIK DEĞİŞKEN FONU',
                             minLength: 3,
                             maxLength: 100
                         },
@@ -673,7 +907,7 @@ Performansı artırmak için önbellek kullanılmaktadır:
                         code: {
                             type: 'string',
                             description: 'Fon kodu',
-                            example: 'AK1'
+                            example: 'AAK'
                         },
                         date: {
                             type: 'string',
@@ -819,9 +1053,9 @@ Performansı artırmak için önbellek kullanılmaktadır:
                     },
                     example: [
                         {
-                            code: 'AK',
-                            title: 'Ak Portföy Yönetimi A.Ş.',
-                            logo: 'https://example.com/logo.png',
+                            code: 'APY',
+                            title: 'ATA PORTFÖY YÖNETİMİ A.Ş.',
+                            logo: 'ata_portfoy_icon.png',
                             total_funds: 42,
                             avg_yield_1m: 2.45,
                             avg_yield_6m: 15.67,
@@ -844,9 +1078,9 @@ Performansı artırmak için önbellek kullanılmaktadır:
                     },
                     example: {
                         company: {
-                            code: 'AK',
-                            title: 'Ak Portföy Yönetimi A.Ş.',
-                            logo: 'https://example.com/logo.png'
+                            code: 'APY',
+                            title: 'ATA PORTFÖY ÇOKLU VARLIK DEĞİŞKEN FONU',
+                            logo: 'ata_portfoy_icon.png'
                         },
                         stats: {
                             total_funds: 42,
@@ -858,8 +1092,8 @@ Performansı artırmak için önbellek kullanılmaktadır:
                             avg_yield_5y: 156.78,
                             best_performing_funds: [
                                 {
-                                    code: 'AK1',
-                                    title: 'Ak Portföy Birinci Fon',
+                                    code: 'AAK',
+                                    title: 'ATA PORTFÖY ÇOKLU VARLIK DEĞİŞKEN FONU',
                                     type: 'Hisse Senedi',
                                     yield_1m: 3.45,
                                     yield_6m: 18.23,
@@ -884,7 +1118,7 @@ Performansı artırmak için önbellek kullanılmaktadır:
                         minLength: 2,
                         maxLength: 10
                     },
-                    example: 'AK1'
+                    example: 'AAK'
                 },
                 StartDate: {
                     name: 'start_date',
@@ -909,7 +1143,7 @@ Performansı artırmak için önbellek kullanılmaktadır:
                 Interval: {
                     name: 'interval',
                     in: 'query',
-                    description: 'Veri aralığı',
+                    description: 'Veri aralı��ı',
                     schema: {
                         type: 'string',
                         enum: ['daily', 'weekly', 'monthly']

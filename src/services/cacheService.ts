@@ -5,9 +5,10 @@ export const cache = new NodeCache();
 
 export const CACHE_DURATIONS = {
     FUNDS_LIST: '5m',      // 5 dakika
+    FUND_COMPARE: '5m',    // 5 dakika    
     FUND_DETAIL: '10m',    // 10 dakika
     FUND_HISTORY: '30m',   // 30 dakika
-    FUND_COMPARE: '5m',    // 5 dakika
+    FUND_ANALYSIS: '30m',   // 30 dakika
     COMPANIES_LIST: '5m',  // 5 dakika
     COMPANY_DETAIL: '10m'  // 10 dakika
 } as const;

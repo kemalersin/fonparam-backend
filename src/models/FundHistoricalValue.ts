@@ -1,31 +1,26 @@
 import { Model, DataTypes } from 'sequelize';
 import sequelize from '../config/database';
-import { FundHistoricalValue as IFundHistoricalValue } from '../types';
 
-class FundHistoricalValue extends Model<IFundHistoricalValue> implements IFundHistoricalValue {
-    public code!: string;
-    public date!: Date;
-    public value?: number;
+class FundHistoricalValue extends Model {
+    declare code: string;
+    declare date: Date;
+    declare value: number;
 }
 
 FundHistoricalValue.init({
     code: {
         type: DataTypes.STRING(10),
-        primaryKey: true,
         allowNull: false,
-        references: {
-            model: 'fund_yields',
-            key: 'code'
-        }
+        primaryKey: true
     },
     date: {
-        type: DataTypes.DATEONLY,
-        primaryKey: true,
-        allowNull: false
+        type: DataTypes.DATE,
+        allowNull: false,
+        primaryKey: true
     },
     value: {
         type: DataTypes.DECIMAL(10, 6),
-        allowNull: true
+        allowNull: false
     }
 }, {
     sequelize,
