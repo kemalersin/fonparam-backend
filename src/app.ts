@@ -16,6 +16,9 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
+// Statik dosya servisi
+app.use('/public', express.static('../public'));
+
 // Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs, {
     customCss: '.swagger-ui .topbar { display: none }',

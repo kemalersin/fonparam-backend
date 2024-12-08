@@ -119,21 +119,13 @@ export const listCompanies = async (req: Request, res: Response): Promise<void> 
         });
 
         // İstatistikleri formatla
-        const data = companies.map((company: any) => {
-            interface CompanyStats {
-                code: string;
-                title: string;
-                logo: string | null;
-                total_funds: number;
-                [key: `avg_yield_${string}`]: number | null;
-            }
-
-            const result: CompanyStats = {
+        const data = companies.map(company => {
+            const result = {
                 code: company.code,
                 title: company.title,
-                logo: company.logo,
-                total_funds: parseInt(company.get('total_funds')),
-            };
+                logo: company.logoUrl,
+                total_funds: company.get('total_funds'),
+            } as any;
 
             // Ortalama getirileri formatla
             ['1m', '6m', 'ytd', '1y', '3y', '5y'].forEach(period => {

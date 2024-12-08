@@ -1,40 +1,38 @@
 import { FundHistoricalValue, FundYield } from '../models';
-import { InvestmentAnalysisRequest, InvestmentAnalysisResponse, StartDate, MonthlyDetail } from '../interfaces/investmentAnalysis';
+import { InvestmentAnalysisRequest, InvestmentAnalysisResponse, StartDate, MonthlyDetail, YearlyIncrease } from '../interfaces/investmentAnalysis';
 import { Op } from 'sequelize';
 
 class InvestmentAnalysisService {
     /**
      * Başlangıç tarihini hesaplar
+     * @param startDate Başlangıç tarihi tipi
+     * @param endDate Bitiş tarihi
      */
-    private getStartDate(startDate: StartDate): Date {
-        const now = new Date();
-        const currentYear = now.getFullYear();
-        const currentMonth = now.getMonth();
-        const currentDay = now.getDate();
-        
+    private getStartDate(startDate: StartDate, endDate: Date): Date {
         // Başlangıç tarihini hesapla
-        let targetDate = new Date(now);
+        let targetDate = new Date(endDate);
+        targetDate.setDate(1); // Ayın ilk gününe ayarla
         
         switch (startDate) {
-            case '5_years_ago':
-                targetDate.setFullYear(currentYear - 5);
+            case 'last_5_years':
+                targetDate.setFullYear(targetDate.getFullYear() - 5);
                 break;
-            case '3_years_ago':
-                targetDate.setFullYear(currentYear - 3);
+            case 'last_3_years':
+                targetDate.setFullYear(targetDate.getFullYear() - 3);
                 break;
-            case '1_year_ago':
-                targetDate.setFullYear(currentYear - 1);
+            case 'last_1_year':
+                targetDate.setFullYear(targetDate.getFullYear() - 1);
                 break;
             case 'year_start':
-                return new Date(currentYear, 0, 1);
-            case '6_months_ago':
-                targetDate.setMonth(currentMonth - 6);
+                return new Date(targetDate.getFullYear(), 0, 1);
+            case 'last_6_months':
+                targetDate.setMonth(targetDate.getMonth() - 5);
                 break;
-            case '3_months_ago':
-                targetDate.setMonth(currentMonth - 2); // 3 ay için başlangıç ayı
+            case 'last_3_months':
+                targetDate.setMonth(targetDate.getMonth() - 2);
                 break;
-            case '1_month_ago':
-                targetDate.setMonth(currentMonth - 1);
+            case 'last_1_month':
+                targetDate.setMonth(targetDate.getMonth() - 1);
                 break;
         }
         
@@ -48,38 +46,61 @@ class InvestmentAnalysisService {
         baseAmount: number,
         currentDate: Date,
         startDate: Date,
-        yearlyIncrease: { type: 'percentage' | 'amount'; value: number }
+        yearlyIncrease?: YearlyIncrease
     ): number {
         // İlk ay kontrolü
         if (currentDate.getFullYear() === startDate.getFullYear() && 
             currentDate.getMonth() === startDate.getMonth()) {
-            return 0; // İlk ay sadece başlangıç yatırımı var
+            return 0;
         }
 
         // Artış yoksa temel miktar
-        if (yearlyIncrease.value === 0) return baseAmount;
+        if (!yearlyIncrease?.type || !yearlyIncrease?.value || yearlyIncrease.value === 0) {
+            return baseAmount;
+        }
 
-        // Yıl farkını hesapla
-        const yearsPassed = currentDate.getFullYear() - startDate.getFullYear();
+        // Yıl farkını hesapla (tam yılları hesapla)
+        const startYear = startDate.getFullYear();
+        const currentYear = currentDate.getFullYear();
+        const startMonth = startDate.getMonth();
+        const currentMonth = currentDate.getMonth();
         
-        // İlk yılın Ocak ayı kontrolü
-        if (yearsPassed === 1 && currentDate.getMonth() === 0 && startDate.getMonth() === 11) {
-            return baseAmount; // İlk yılın Ocak ayında artış yok
+        let yearsPassed = currentYear - startYear;
+        
+        // Ay kontrolü yaparak kısmi yılları düzelt
+        if (currentMonth < startMonth) {
+            yearsPassed--;
         }
 
-        if (yearsPassed <= 0) return baseAmount;
-
-        // Artışı hesapla
-        if (yearlyIncrease.type === 'percentage') {
-            return baseAmount * Math.pow(1 + yearlyIncrease.value / 100, yearsPassed);
-        } else {
-            return baseAmount + (yearlyIncrease.value * yearsPassed);
+        // Yıllık artışı uygula
+        if (yearsPassed > 0) {
+            if (yearlyIncrease.type === 'percentage') {
+                // Her yıl için bileşik faiz formülünü uygula
+                const multiplier = Math.pow(1 + (yearlyIncrease.value / 100), yearsPassed);
+                return Math.round(baseAmount * multiplier);
+            } else {
+                // Sabit artış
+                return baseAmount + (yearlyIncrease.value * yearsPassed);
+            }
         }
+
+        return baseAmount;
     }
 
     async analyze(request: InvestmentAnalysisRequest): Promise<InvestmentAnalysisResponse> {
-        const startDate = this.getStartDate(request.startDate);
-        const endDate = new Date();
+        // Önce en son tarihi bul
+        const latestData = await FundHistoricalValue.findOne({
+            where: { code: request.fundCode },
+            order: [['date', 'DESC']],
+            raw: true
+        });
+
+        if (!latestData) {
+            throw new Error('Fon için veri bulunamadı');
+        }
+
+        const endDate = new Date(latestData.date);
+        const startDate = this.getStartDate(request.startDate, endDate);
 
         // Fon bilgilerini getir
         const fund = await FundYield.findByPk(request.fundCode);
@@ -87,8 +108,22 @@ class InvestmentAnalysisService {
             throw new Error('Fon bulunamadı');
         }
 
-        // Fon verilerini getir
-        const fundData = await FundHistoricalValue.findAll({
+        // Başlangıç tarihinden önceki en son veriyi getir
+        const previousData = await FundHistoricalValue.findAll({
+            attributes: ['code', 'date', 'value'],
+            where: {
+                code: request.fundCode,
+                date: {
+                    [Op.lt]: startDate
+                }
+            },
+            order: [['date', 'DESC']],
+            limit: 1,
+            raw: true
+        });
+
+        // Belirtilen tarih aralığındaki verileri getir
+        const periodData = await FundHistoricalValue.findAll({
             attributes: ['code', 'date', 'value'],
             where: {
                 code: request.fundCode,
@@ -96,19 +131,24 @@ class InvestmentAnalysisService {
                     [Op.between]: [startDate, endDate]
                 }
             },
-            order: [['date', 'ASC']]
+            order: [['date', 'ASC']],
+            raw: true
         });
 
-        if (!fundData.length) {
+        // Tüm verileri birleştir ve sırala
+        const allData = [...previousData, ...periodData].sort((a, b) => 
+            new Date(a.date).getTime() - new Date(b.date).getTime()
+        );
+
+        if (!allData.length) {
             throw new Error('Fon için veri bulunamadı');
         }
 
         // Her ay için fon verilerini düzenle
         const monthlyFundData = new Map<string, FundHistoricalValue>();
-        const now = new Date();
-        let lastUsedDate = now; // Son kullanılan gerçek tarihi takip etmek için
+        let lastUsedDate = endDate;
         
-        fundData.forEach(data => {
+        allData.forEach(data => {
             const dataDate = new Date(data.date);
             const key = `${dataDate.getFullYear()}-${dataDate.getMonth() + 1}`;
             
@@ -149,7 +189,15 @@ class InvestmentAnalysisService {
             }
 
             // Gerçek tarihi kullan
-            currentDate = new Date(monthData.date);
+            const dataDate = new Date(monthData.date);
+            
+            // Eğer veri tarihi başlangıç tarihinden önceyse veya bitiş tarihinden sonraysa atla
+            if (dataDate < startDate || dataDate > endDate) {
+                currentDate.setMonth(currentDate.getMonth() + 1);
+                continue;
+            }
+
+            currentDate = dataDate;
 
             // İlk ay mı kontrol et
             const isFirstMonth = monthlyDetails.length === 0;
@@ -165,43 +213,58 @@ class InvestmentAnalysisService {
             // İlk ay için başlangıç yatırımı
             if (isFirstMonth) {
                 totalUnits = request.initialInvestment / monthData.value;
-            } else if (monthlyInvestment > 0) {
+                totalInvestment = request.initialInvestment; // Başlangıç yatırımını ekle
+            } else {
                 // Sonraki aylar için aylık yatırım
-                totalInvestment += monthlyInvestment;
-                const newUnits = monthlyInvestment / monthData.value;
+                const currentMonthInvestment = monthlyInvestment; // Artışlı miktar
+                totalInvestment += currentMonthInvestment;
+                const newUnits = currentMonthInvestment / monthData.value;
                 totalUnits += newUnits;
             }
 
             // Değerleri hesapla
             const currentValue = totalUnits * monthData.value;
-            const investment = isFirstMonth ? 0 : monthlyInvestment;
-            const yieldAmount = currentValue - totalInvestment;
-            const yieldPercentage = isFirstMonth ? 0 : 
-                ((currentValue - (previousValue + monthlyInvestment)) / (previousValue + monthlyInvestment)) * 100;
+            const investment = isFirstMonth ? request.initialInvestment : monthlyInvestment;
+
+            // O ayki değer değişimini hesapla
+            let monthlyChange, monthlyChangePercentage;
+            
+            if (isFirstMonth) {
+                monthlyChange = 0;
+                monthlyChangePercentage = 0;
+            } else {
+                // Basit değişim hesaplaması
+                monthlyChange = currentValue - previousValue;
+                monthlyChangePercentage = ((currentValue - previousValue) / previousValue) * 100;
+            }
+
+            // Toplam getiri hesapla
+            const totalYield = currentValue - totalInvestment;
+            const totalYieldPercentage = (totalYield / totalInvestment) * 100;
 
             // Detayları ekle
             if (request.includeMonthlyDetails) {
                 monthlyDetails.push({
                     date: currentDate.toISOString().split('T')[0],
-                    investment,
+                    investment: isFirstMonth ? request.initialInvestment : monthlyInvestment,
                     totalInvestment,
                     unitPrice: Number(monthData.value),
                     units: isFirstMonth ? totalUnits : monthlyInvestment / monthData.value,
                     totalUnits,
                     value: currentValue,
-                    yield: yieldAmount,
-                    yieldPercentage
+                    monthlyChange: monthlyChange,
+                    monthlyChangePercentage: monthlyChangePercentage,
+                    totalYield: totalYield,
+                    totalYieldPercentage: totalYieldPercentage
                 });
             }
 
             previousValue = currentValue;
-            
-            // Sonraki aya geç - son kullanılan gerçek tarihi baz alarak
             currentDate.setMonth(currentDate.getMonth() + 1);
         }
 
         // Özet hesapla
-        const lastValue = totalUnits * fundData[fundData.length - 1].value!;
+        const lastValue = totalUnits * allData[allData.length - 1].value!;
         const totalYield = lastValue - totalInvestment;
 
         return {

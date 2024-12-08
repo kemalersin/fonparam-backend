@@ -11,8 +11,7 @@ const sequelize = new Sequelize(
         host: process.env.DB_HOST || 'localhost',
         dialect: 'mysql',
         dialectOptions: {
-            charset: process.env.DB_CHARSET || 'utf8mb4',
-            collate: process.env.DB_COLLATION || 'utf8mb4_turkish_ci',
+            charset: 'utf8mb4'
         },
         logging: process.env.NODE_ENV === 'development' ? console.log : false,
         pool: {

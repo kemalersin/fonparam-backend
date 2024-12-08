@@ -1,4 +1,4 @@
-export type StartDate = '5_years_ago' | '3_years_ago' | '1_year_ago' | 'year_start' | '6_months_ago' | '3_months_ago' | '1_month_ago';
+export type StartDate = 'last_5_years' | 'last_3_years' | 'last_1_year' | 'year_start' | 'last_6_months' | 'last_3_months' | 'last_1_month';
 
 export type YearlyIncreaseType = 'percentage' | 'amount';
 
@@ -12,7 +12,7 @@ export interface InvestmentAnalysisRequest {
     startDate: StartDate;
     initialInvestment: number;
     monthlyInvestment: number;
-    yearlyIncrease: YearlyIncrease;
+    yearlyIncrease?: YearlyIncrease;
     includeMonthlyDetails?: boolean;
 }
 
@@ -24,8 +24,10 @@ export interface MonthlyDetail {
     units: number;             // O ay alınan pay adedi
     totalUnits: number;        // Toplam pay adedi
     value: number;             // Yatırımın o ayki değeri
-    yield: number;             // O ayki getiri (tutar)
-    yieldPercentage: number;   // O ayki getiri (%)
+    monthlyChange: number;      // O ayki değişim (tutar)
+    monthlyChangePercentage: number;   // O ayki değişim (%)
+    totalYield: number;        // O ana kadarki toplam getiri (tutar)
+    totalYieldPercentage: number;     // O ana kadarki toplam getiri (%)
 }
 
 export interface InvestmentAnalysisSummary {

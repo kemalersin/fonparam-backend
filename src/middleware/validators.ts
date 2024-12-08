@@ -192,24 +192,29 @@ export const validateAnalysisRequest = [
         .isLength({ min: 2, max: 10 })
         .withMessage('Fon kodu 2-10 karakter uzunluğunda olmalıdır'),
     query('startDate')
-        .isIn(['5_years_ago', '3_years_ago', '1_year_ago', 'year_start', '6_months_ago', '3_months_ago', '1_month_ago'])
+        .isIn(['last_5_years', 'last_3_years', 'last_1_year', 'year_start', 'last_6_months', 'last_3_months', 'last_1_month'])
         .withMessage('Geçersiz başlangıç tarihi'),
     query('initialInvestment')
         .isFloat({ min: 0 })
         .withMessage('Başlangıç yatırımı 0 veya daha büyük olmalıdır'),
     query('monthlyInvestment')
-        .isFloat({ min: 0.01 })
-        .withMessage('Aylık yatırım 0\'dan büyük olmalıdır'),
+        .optional()
+        .isFloat({ min: 0 })
+        .withMessage('Aylık yatırım 0 veya daha büyük olmalıdır')
+        .default(0),
     query('yearlyIncrease.type')
+        .optional()
         .isIn(['percentage', 'amount'])
         .withMessage('Geçersiz yıllık artış tipi'),
     query('yearlyIncrease.value')
+        .optional()
         .isFloat({ min: 0 })
         .withMessage('Yıllık artış değeri 0 veya daha büyük olmalıdır'),
     query('includeMonthlyDetails')
         .optional()
         .isBoolean()
-        .withMessage('Aylık detaylar boolean olmalıdır'),
+        .withMessage('Aylık detaylar boolean olmalıdır')
+        .default(true),
     (req: Request, res: Response, next: NextFunction) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {

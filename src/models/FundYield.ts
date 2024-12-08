@@ -1,5 +1,8 @@
 import { Model, DataTypes } from 'sequelize';
 import sequelize from '../config/database';
+import { FundManagementCompany } from './FundManagementCompany';
+
+const API_URL = process.env.API_URL || 'http://localhost:3000';
 
 interface FundYieldAttributes {
     code: string;
@@ -14,6 +17,7 @@ interface FundYieldAttributes {
     yield_1y?: number;
     yield_3y?: number;
     yield_5y?: number;
+    management_company?: FundManagementCompany;
 }
 
 class FundYield extends Model<FundYieldAttributes> implements FundYieldAttributes {
@@ -29,6 +33,24 @@ class FundYield extends Model<FundYieldAttributes> implements FundYieldAttribute
     public yield_1y?: number;
     public yield_3y?: number;
     public yield_5y?: number;
+    public management_company?: FundManagementCompany;
+
+    // JSON dönüşümü için
+    toJSON() {
+        const values = Object.assign({}, super.toJSON());
+        if (values.management_company) {
+            // Eğer management_company bir instance ise
+            if (values.management_company instanceof FundManagementCompany) {
+                values.management_company = values.management_company.toJSON();
+            }
+            // Logo URL'sini güncelle
+            const company = values.management_company as { logo?: string };
+            if (company && company.logo) {
+                company.logo = `${API_URL}/public/logos/${company.logo}`;
+            }
+        }
+        return values;
+    }
 }
 
 FundYield.init(

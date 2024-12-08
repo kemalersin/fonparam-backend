@@ -217,7 +217,7 @@ Performansı artırmak için önbellek kullanılmaktadır:
                                             company: {
                                                 code: 'APY',
                                                 title: 'ATA PORTFÖY YÖNETİMİ A.Ş.',
-                                                logo: 'ata_portfoy_icon.png'
+                                                logo: 'http://localhost:3000/public/logos/ata_portfoy_icon.png'
                                             },
                                             stats: {
                                                 total_funds: 42,
@@ -431,81 +431,85 @@ Performansı artırmak için önbellek kullanılmaktadır:
                 get: {
                     tags: ['Fonlar'],
                     summary: 'Fon için yatırım analizi yapar',
-                    description: 'Belirtilen fon için başlangıç yatırımı ve aylık düzenli yatırım ile getiri analizi yapar',
+                    description: 'Belirtilen fon için geçmiş verileri kullanarak yatırım analizi yapar',
                     parameters: [
                         {
-                            in: 'path',
                             name: 'code',
+                            in: 'path',
                             required: true,
-                            schema: {
-                                type: 'string'
-                            },
                             description: 'Fon kodu',
+                            schema: {
+                                type: 'string',
+                                minLength: 2,
+                                maxLength: 10
+                            },
                             example: 'AAK'
                         },
                         {
-                            in: 'query',
                             name: 'startDate',
+                            in: 'query',
                             required: true,
+                            description: 'Başlangıç tarihi',
                             schema: {
                                 type: 'string',
-                                enum: ['5_years_ago', '3_years_ago', '1_year_ago', 'year_start', '6_months_ago', '3_months_ago', '1_month_ago']
+                                enum: ['last_5_years', 'last_3_years', 'last_1_year', 'year_start', 'last_6_months', 'last_3_months', 'last_1_month']
                             },
-                            description: 'Başlangıç tarihi',
-                            example: '5_years_ago'
+                            example: 'last_3_years'
                         },
                         {
-                            in: 'query',
                             name: 'initialInvestment',
+                            in: 'query',
                             required: true,
+                            description: 'Başlangıç yatırımı',
                             schema: {
                                 type: 'number',
                                 minimum: 0
                             },
-                            description: 'Başlangıç yatırımı',
                             example: 10000
                         },
                         {
-                            in: 'query',
                             name: 'monthlyInvestment',
-                            required: true,
+                            in: 'query',
+                            required: false,
+                            description: 'Aylık yatırım tutarı',
                             schema: {
                                 type: 'number',
-                                minimum: 0
+                                minimum: 0,
+                                default: 0
                             },
-                            description: 'Aylık düzenli yatırım',
                             example: 1000
                         },
                         {
-                            in: 'query',
                             name: 'yearlyIncrease.type',
-                            required: true,
+                            in: 'query',
+                            required: false,
+                            description: 'Yıllık artış tipi',
                             schema: {
                                 type: 'string',
                                 enum: ['percentage', 'amount']
                             },
-                            description: 'Yıllık artış tipi',
                             example: 'percentage'
                         },
                         {
-                            in: 'query',
                             name: 'yearlyIncrease.value',
-                            required: true,
+                            in: 'query',
+                            required: false,
+                            description: 'Yıllık artış değeri',
                             schema: {
                                 type: 'number',
                                 minimum: 0
                             },
-                            description: 'Yıllık artış değeri',
-                            example: 20
+                            example: 10
                         },
                         {
-                            in: 'query',
                             name: 'includeMonthlyDetails',
+                            in: 'query',
                             required: false,
+                            description: 'Aylık detayları getir',
                             schema: {
-                                type: 'boolean'
+                                type: 'boolean',
+                                default: true
                             },
-                            description: 'Aylık detayları dahil et',
                             example: true
                         }
                     ],
@@ -516,104 +520,137 @@ Performansı artırmak için önbellek kullanılmaktadır:
                                 'application/json': {
                                     schema: {
                                         type: 'object',
-                                        required: ['code', 'management_company_id', 'title', 'summary'],
                                         properties: {
                                             code: {
                                                 type: 'string',
-                                                example: 'AAK',
-                                                description: 'Fon kodu'
+                                                description: 'Fon kodu',
+                                                example: 'AAK'
                                             },
                                             management_company_id: {
                                                 type: 'string',
                                                 description: 'Portföy yönetim şirketi kodu',
-                                                example: 'APY'
+                                                example: 'ATA'
                                             },
                                             title: {
                                                 type: 'string',
                                                 description: 'Fon adı',
-                                                example: 'ATA PORTFÖY ÇOKLU VARLIK DEĞİŞKEN FONU'
+                                                example: 'ATA PORTFÖY BİRİNCİ HİSSE SENEDİ FONU'
                                             },
                                             summary: {
                                                 type: 'object',
-                                                required: ['totalInvestment', 'currentValue', 'totalYield', 'totalYieldPercentage'],
                                                 properties: {
                                                     totalInvestment: {
                                                         type: 'number',
-                                                        description: 'Toplam yatırılan para',
-                                                        example: 100000
+                                                        description: 'Toplam yatırım',
+                                                        example: 46000 // 10000 + (1000 * 36 ay)
                                                     },
                                                     currentValue: {
                                                         type: 'number',
                                                         description: 'Güncel değer',
-                                                        example: 100000
+                                                        example: 68432.50
                                                     },
                                                     totalYield: {
                                                         type: 'number',
                                                         description: 'Toplam getiri (tutar)',
-                                                        example: 100000
+                                                        example: 22432.50
                                                     },
                                                     totalYieldPercentage: {
                                                         type: 'number',
                                                         description: 'Toplam getiri (%)',
-                                                        example: 10
+                                                        example: 48.77
                                                     }
                                                 }
                                             },
                                             monthlyDetails: {
                                                 type: 'array',
-                                                description: 'Aylık detaylar (includeMonthlyDetails=true ise)',
                                                 items: {
                                                     type: 'object',
-                                                    required: ['date', 'investment', 'totalInvestment', 'unitPrice', 'units', 'totalUnits', 'value', 'yield', 'yieldPercentage'],
                                                     properties: {
                                                         date: {
                                                             type: 'string',
-                                                            format: 'date',
                                                             description: 'Tarih',
-                                                            example: '2024-01-01'
+                                                            example: '2024-11-05'
                                                         },
                                                         investment: {
                                                             type: 'number',
                                                             description: 'O ay yapılan yatırım',
-                                                            example: 1000
+                                                            example: 1331
                                                         },
                                                         totalInvestment: {
                                                             type: 'number',
                                                             description: 'O ana kadar yapılan toplam yatırım',
-                                                            example: 10000
+                                                            example: 44669
                                                         },
                                                         unitPrice: {
                                                             type: 'number',
                                                             description: 'Fon birim fiyatı',
-                                                            example: 10
+                                                            example: 12.123
                                                         },
                                                         units: {
                                                             type: 'number',
                                                             description: 'O ay alınan pay adedi',
-                                                            example: 100
+                                                            example: 109.791
                                                         },
                                                         totalUnits: {
                                                             type: 'number',
                                                             description: 'Toplam pay adedi',
-                                                            example: 1000
+                                                            example: 5350.120
                                                         },
                                                         value: {
                                                             type: 'number',
                                                             description: 'Yatırımın o ayki değeri',
-                                                            example: 10000
+                                                            example: 64856.50
                                                         },
-                                                        yield: {
+                                                        monthlyChange: {
                                                             type: 'number',
-                                                            description: 'O ayki getiri (tutar)',
-                                                            example: 100
+                                                            description: 'O ayki değişim (tutar)',
+                                                            example: 1567.89
                                                         },
-                                                        yieldPercentage: {
+                                                        monthlyChangePercentage: {
                                                             type: 'number',
-                                                            description: 'O ayki getiri (%)',
-                                                            example: 10
+                                                            description: 'O ayki değişim (%)',
+                                                            example: 2.78
+                                                        },
+                                                        totalYield: {
+                                                            type: 'number',
+                                                            description: 'O ana kadarki toplam getiri (tutar)',
+                                                            example: 3456.78
+                                                        },
+                                                        totalYieldPercentage: {
+                                                            type: 'number',
+                                                            description: 'O ana kadarki toplam getiri (%)',
+                                                            example: 5.67
                                                         }
                                                     }
-                                                }
+                                                },
+                                                example: [
+                                                    {
+                                                        date: '2024-11-05',
+                                                        investment: 1331,
+                                                        totalInvestment: 44669,
+                                                        unitPrice: 12.123,
+                                                        units: 109.791,
+                                                        totalUnits: 5350.120,
+                                                        value: 64856.50,
+                                                        monthlyChange: 1567.89,
+                                                        monthlyChangePercentage: 2.78,
+                                                        totalYield: 3456.78,
+                                                        totalYieldPercentage: 5.67
+                                                    },
+                                                    {
+                                                        date: '2024-12-05',
+                                                        investment: 1331,
+                                                        totalInvestment: 46000,
+                                                        unitPrice: 12.543,
+                                                        units: 106.114,
+                                                        totalUnits: 5456.234,
+                                                        value: 68432.50,
+                                                        monthlyChange: 1234.56,
+                                                        monthlyChangePercentage: 2.45,
+                                                        totalYield: 4567.89,
+                                                        totalYieldPercentage: 7.89
+                                                    }
+                                                ]
                                             }
                                         }
                                     }
@@ -621,13 +658,13 @@ Performansı artırmak için önbellek kullanılmaktadır:
                             }
                         },
                         '400': {
-                            description: 'Geçersiz parametreler'
+                            $ref: '#/components/responses/ValidationError'
                         },
                         '404': {
-                            description: 'Fon bulunamadı'
+                            $ref: '#/components/responses/NotFound'
                         },
                         '500': {
-                            description: 'Sunucu hatası'
+                            $ref: '#/components/responses/ServerError'
                         }
                     }
                 }
@@ -789,7 +826,7 @@ Performansı artırmak için önbellek kullanılmaktadır:
                         code: {
                             type: 'string',
                             description: 'Şirket kodu',
-                            example: 'AK',
+                            example: 'APY',
                             minLength: 2,
                             maxLength: 10
                         },
@@ -803,7 +840,7 @@ Performansı artırmak için önbellek kullanılmaktadır:
                         logo: {
                             type: 'string',
                             description: 'Şirket logosu URL',
-                            example: 'ata_portfoy_icon.png',
+                            example: 'http://localhost:3000/public/logos/ata_portfoy_icon.png',
                             format: 'uri'
                         }
                     }
@@ -1080,7 +1117,7 @@ Performansı artırmak için önbellek kullanılmaktadır:
                         company: {
                             code: 'APY',
                             title: 'ATA PORTFÖY ÇOKLU VARLIK DEĞİŞKEN FONU',
-                            logo: 'ata_portfoy_icon.png'
+                            logo: 'http://localhost:3000/public/logos/ata_portfoy_icon.png'
                         },
                         stats: {
                             total_funds: 42,
@@ -1143,7 +1180,7 @@ Performansı artırmak için önbellek kullanılmaktadır:
                 Interval: {
                     name: 'interval',
                     in: 'query',
-                    description: 'Veri aralı��ı',
+                    description: 'Veri aralığı',
                     schema: {
                         type: 'string',
                         enum: ['daily', 'weekly', 'monthly']
@@ -1168,6 +1205,28 @@ Performansı artırmak için önbellek kullanılmaktadır:
                         'application/json': {
                             schema: {
                                 $ref: '#/components/schemas/ValidationError'
+                            }
+                        }
+                    }
+                },
+                ServerError: {
+                    description: 'Sunucu hatası',
+                    content: {
+                        'application/json': {
+                            schema: {
+                                type: 'object',
+                                properties: {
+                                    error: {
+                                        type: 'string',
+                                        description: 'Hata mesajı',
+                                        example: 'Analiz hesaplanırken bir hata oluştu'
+                                    },
+                                    message: {
+                                        type: 'string',
+                                        description: 'Detaylı hata mesajı',
+                                        example: 'Fon için veri bulunamadı'
+                                    }
+                                }
                             }
                         }
                     }
