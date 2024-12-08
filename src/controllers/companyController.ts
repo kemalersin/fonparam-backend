@@ -42,7 +42,7 @@ const calculateStats = (funds: FundYield[]) => {
             code: fund.code,
             title: fund.title,
             type: fund.type,
-            ...Object.fromEntries(periods.map(period => [`yield_${period}`, fund[`yield_${period}`]]))
+            ...Object.fromEntries(periods.map(period => [`yield_${period}`, fund[`yield_${period}`] !== null ? Number(fund[`yield_${period}`]) : null]))
         }));
 
     return stats;

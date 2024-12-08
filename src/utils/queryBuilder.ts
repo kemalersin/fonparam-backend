@@ -28,7 +28,9 @@ const calculatePagination = (page?: string, limit?: string) => {
 const buildSearchFilter = (search: string) => ({
     [Op.or]: [
         { code: { [Op.like]: `%${search}%` } },
-        { title: { [Op.like]: `%${search}%` } }
+        { title: { [Op.like]: `%${search}%` } },
+        { management_company_id: { [Op.like]: `%${search}%` } },
+        { '$management_company.title$': { [Op.like]: `%${search}%` } }
     ]
 });
 

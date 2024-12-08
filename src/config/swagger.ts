@@ -288,6 +288,14 @@ Performansı artırmak için önbellek kullanılmaktadır:
                             }
                         },
                         {
+                            name: 'search',
+                            in: 'query',
+                            description: 'Fon kodu, açıklaması, şirket kodu veya şirket adı ile arama',
+                            schema: {
+                                type: 'string'
+                            }
+                        },                        
+                        {
                             name: 'code',
                             in: 'query',
                             description: 'Fon kodu',
@@ -614,12 +622,12 @@ Performansı artırmak için önbellek kullanılmaktadır:
                                                         totalYield: {
                                                             type: 'number',
                                                             description: 'O ana kadarki toplam getiri (tutar)',
-                                                            example: 3456.78
+                                                            example: 3576.12
                                                         },
                                                         totalYieldPercentage: {
                                                             type: 'number',
                                                             description: 'O ana kadarki toplam getiri (%)',
-                                                            example: 5.67
+                                                            example: 5.23
                                                         }
                                                     }
                                                 },
@@ -634,8 +642,8 @@ Performansı artırmak için önbellek kullanılmaktadır:
                                                         value: 64856.50,
                                                         monthlyChange: 1567.89,
                                                         monthlyChangePercentage: 2.78,
-                                                        totalYield: 3456.78,
-                                                        totalYieldPercentage: 5.67
+                                                        totalYield: 3576.12,
+                                                        totalYieldPercentage: 5.23
                                                     },
                                                     {
                                                         date: '2024-12-05',
@@ -647,8 +655,8 @@ Performansı artırmak için önbellek kullanılmaktadır:
                                                         value: 68432.50,
                                                         monthlyChange: 1234.56,
                                                         monthlyChangePercentage: 2.45,
-                                                        totalYield: 4567.89,
-                                                        totalYieldPercentage: 7.89
+                                                        totalYield: 4810.68,
+                                                        totalYieldPercentage: 7.68
                                                     }
                                                 ]
                                             }

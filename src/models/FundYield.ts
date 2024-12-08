@@ -37,7 +37,15 @@ class FundYield extends Model<FundYieldAttributes> implements FundYieldAttribute
 
     // JSON dönüşümü için
     toJSON() {
-        const values = Object.assign({}, super.toJSON());
+        const values = Object.assign({}, super.toJSON()) as Record<string, any>;
+
+        // Getiri alanlarını number'a çevir
+        ['yield_1m', 'yield_3m', 'yield_6m', 'yield_ytd', 'yield_1y', 'yield_3y', 'yield_5y'].forEach(field => {
+            if (values[field] !== null && values[field] !== undefined) {
+                values[field] = Number(values[field]);
+            }
+        });
+
         if (values.management_company) {
             // Eğer management_company bir instance ise
             if (values.management_company instanceof FundManagementCompany) {
