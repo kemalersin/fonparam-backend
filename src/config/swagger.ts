@@ -298,12 +298,11 @@ Performansı artırmak için önbellek kullanılmaktadır:
                         {
                             name: 'code',
                             in: 'query',
-                            description: 'Fon kodu',
+                            description: 'Fon kodu veya kodları (virgülle ayrılmış)',
                             schema: {
-                                type: 'string',
-                                pattern: '^[A-Z0-9]+$'
+                                type: 'string'
                             },
-                            example: 'AAK'
+                            example: 'AAK,DAH'
                         },
                         {
                             name: 'management_company',

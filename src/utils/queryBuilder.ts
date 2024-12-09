@@ -52,7 +52,12 @@ export const buildFundFilters = (query: FundFilters): BaseFilters => {
     if (query.type) where.type = query.type;
     if (query.management_company) where.management_company_id = query.management_company;
     if (query.tefas !== undefined) where.tefas = query.tefas === 'true';
-    if (query.code) where.code = { [Op.like]: `%${query.code}%` };
+    if (query.code) {
+        const codes = query.code.split(',').map(code => code.trim());
+        where.code = codes.length === 1 
+            ? { [Op.like]: `%${codes[0]}%` }
+            : { [Op.in]: codes };
+    }
 
     // Getiri filtreleri
     ['yield_1m', 'yield_3m', 'yield_6m', 'yield_ytd', 'yield_1y', 'yield_3y', 'yield_5y'].forEach(field => {
