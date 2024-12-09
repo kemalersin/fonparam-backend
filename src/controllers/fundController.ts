@@ -3,6 +3,7 @@ import { FundYield, FundManagementCompany, FundHistoricalValue } from '../models
 import { buildFundFilters, buildHistoricalValueFilters } from '../utils/queryBuilder';
 import { FundFilters, TypedRequest } from '../types';
 import { Op, FindOptions } from 'sequelize';
+import sequelize from '../config/database';
 
 // Ortak include tanımları
 const FUND_INCLUDES = {
@@ -133,5 +134,102 @@ export const compareFunds = async (
         res.json(funds);
     } catch (error) {
         res.status(500).json({ error: (error as Error).message });
+    }
+};
+
+export const getTopPerformingFunds = async (req: Request, res: Response) => {
+    try {
+        const { funds: fundCodes } = req.query;
+
+        if (fundCodes) {
+            // Referans fonların performansına yakın fonları getir
+            const referenceFundCodes = Array.isArray(fundCodes) 
+                ? fundCodes.map(code => String(code))
+                : String(fundCodes).split(',');
+            const referenceFunds = await FundYield.findAll({
+                where: {
+                    code: { [Op.in]: referenceFundCodes },
+                    yield_1y: {
+                        [Op.ne]: null
+                    }
+                },
+                include: [FUND_INCLUDES.MANAGEMENT_COMPANY]
+            });
+
+            if (!referenceFunds.length) {
+                return res.status(404).json({ error: 'Belirtilen referans fonlar bulunamadı' });
+            }
+
+            // Referans fonların ortalama performansını hesapla
+            const validFunds = referenceFunds.filter(fund => fund.yield_1y != null);
+            if (!validFunds.length) {
+                return res.status(404).json({ error: 'Referans fonların 1 yıllık getiri verisi bulunamadı' });
+            }
+            
+            const avgYield = validFunds.reduce((sum, fund) => sum + Number(fund.yield_1y), 0) / validFunds.length;
+            
+            if (isNaN(avgYield)) {
+                return res.status(500).json({ error: 'Ortalama getiri hesaplanamadı' });
+            }
+
+            const yieldRange = 5;
+            const minYield = avgYield - yieldRange;
+            const maxYield = avgYield + yieldRange;
+            const timestamp = Date.now();
+
+            const funds = await FundYield.findAll({
+                where: {
+                    [Op.and]: [
+                        { yield_1y: { [Op.ne]: null } },
+                        { yield_1y: { [Op.gt]: 0 } },
+                        { yield_1y: { [Op.between]: [minYield, maxYield] } },
+                        { code: { [Op.notIn]: referenceFundCodes } }
+                    ]
+                },
+                include: [{
+                    model: FundManagementCompany,
+                    as: 'management_company',
+                    required: true
+                }],
+                order: [
+                    sequelize.literal(`RAND(${timestamp})`),
+                    ['yield_1y', 'DESC']
+                ],
+                limit: 10
+            });
+
+            if (!funds.length) {
+                return res.status(404).json({ error: 'Benzer performansta fon bulunamadı' });
+            }
+
+            return res.json(funds);
+        }
+
+        // Referans fon belirtilmemişse en iyi performanslı fonlardan rastgele 10 tane getir
+        const timestamp = Date.now(); // Her sorguda farklı bir değer
+        const topFunds = await FundYield.findAll({
+            where: sequelize.literal('yield_1y IS NOT NULL AND yield_1y > 50'),
+            include: [{
+                model: FundManagementCompany,
+                as: 'management_company',
+                required: true
+            }],
+            order: [
+                sequelize.literal(`RAND(${timestamp})`),
+                ['yield_1y', 'DESC']
+            ],
+            limit: 10
+        });
+
+        if (!topFunds.length) {
+            return res.status(404).json({ error: 'Yüksek performanslı fon bulunamadı' });
+        }
+
+        res.json(topFunds);
+    } catch (error) {
+        res.status(500).json({
+            error: 'Fonlar getirilirken bir hata oluştu',
+            message: error instanceof Error ? error.message : 'Bilinmeyen hata'
+        });
     }
 }; 

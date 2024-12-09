@@ -3,7 +3,8 @@ import {
     listFunds,
     getFundDetails,
     getFundHistoricalValues,
-    compareFunds
+    compareFunds,
+    getTopPerformingFunds
 } from '../controllers/fundController';
 import { analyzeInvestment } from '../controllers/investmentAnalysisController';
 import {
@@ -21,6 +22,11 @@ router.get('/',
     rateLimiter('funds-list', RATE_LIMITS.FUNDS_LIST.MAX, RATE_LIMITS.FUNDS_LIST.WINDOW_MINUTES),
     cacheMiddleware(CACHE_DURATIONS.FUNDS_LIST), 
     listFunds
+);
+
+router.get('/top-performing',
+    rateLimiter('top-performing', RATE_LIMITS.FUNDS_LIST.MAX, RATE_LIMITS.FUNDS_LIST.WINDOW_MINUTES),
+    getTopPerformingFunds
 );
 
 router.get(

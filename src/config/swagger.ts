@@ -358,6 +358,59 @@ Performansı artırmak için önbellek kullanılmaktadır:
                     }
                 }
             },
+            '/funds/top-performing': {
+                get: {
+                    tags: ['Fonlar'],
+                    summary: 'En iyi performans gösteren fonları listeler',
+                    description: 'Rastgele 10 adet iyi performans gösteren fon getirir. İsteğe bağlı olarak referans fonlar belirterek, bu fonlara benzer performans gösteren fonları bulabilirsiniz.',
+                    parameters: [
+                        {
+                            name: 'funds',
+                            in: 'query',
+                            description: 'Referans fon kodları (virgülle ayrılmış)',
+                            schema: {
+                                type: 'string'
+                            },
+                            example: 'AAK,DAH',
+                            required: false
+                        }
+                    ],
+                    responses: {
+                        '200': {
+                            description: 'Başarılı',
+                            content: {
+                                'application/json': {
+                                    schema: {
+                                        type: 'array',
+                                        items: {
+                                            $ref: '#/components/schemas/FundYield'
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        '404': {
+                            description: 'Fon bulunamadı',
+                            content: {
+                                'application/json': {
+                                    schema: {
+                                        type: 'object',
+                                        properties: {
+                                            error: {
+                                                type: 'string',
+                                                example: 'En iyi performans gösteren fonlar bulunamadı'
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        '500': {
+                            $ref: '#/components/responses/ServerError'
+                        }
+                    }
+                }
+            },
             '/funds/compare': {
                 get: {
                     tags: ['Fonlar'],
