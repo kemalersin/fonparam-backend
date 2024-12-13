@@ -28,20 +28,11 @@ const calculatePagination = (page?: string, limit?: string) => {
 const buildSearchFilter = (search: string) => ({
     [Op.or]: [
         { code: { [Op.like]: `%${search}%` } },
-        { title: { [Op.like]: `%${search}%` } },
-        { management_company_id: { [Op.like]: `%${search}%` } },
-        { '$management_company.title$': { [Op.like]: `%${search}%` } }
+        { '$fund.title$': { [Op.like]: `%${search}%` } },
+        { '$fund.management_company.code$': { [Op.like]: `%${search}%` } },
+        { '$fund.management_company.title$': { [Op.like]: `%${search}%` } }
     ]
 });
-
-const buildYieldFilter = (field: string, min?: string, max?: string) => {
-    if (!min && !max) return null;
-
-    const filter: Record<symbol, number> = {};
-    if (min) filter[Op.gte] = parseFloat(min);
-    if (max) filter[Op.lte] = parseFloat(max);
-    return filter;
-};
 
 // Ana fonksiyonlar
 export const buildFundFilters = (query: FundFilters): BaseFilters => {
@@ -49,9 +40,16 @@ export const buildFundFilters = (query: FundFilters): BaseFilters => {
     const { limit, offset } = calculatePagination(query.page, query.limit);
 
     // Temel filtreler
-    if (query.type) where.type = query.type;
-    if (query.management_company) where.management_company_id = query.management_company;
-    if (query.tefas !== undefined) where.tefas = query.tefas === 'true';
+    if (query.type) {
+        where[Op.or] = [
+            { '$fund_type.type$': query.type },
+            { '$fund_type.short_name$': query.type },
+            { '$fund_type.long_name$': query.type },
+            { '$fund_type.group_name$': query.type }
+        ];
+    }
+    if (query.management_company) where['$management_company.code$'] = query.management_company;
+    if (query.tefas !== undefined) where['$tefas$'] = query.tefas === 'true';
     if (query.code) {
         const codes = query.code.split(',').map(code => code.trim());
         where.code = codes.length === 1 
@@ -60,9 +58,8 @@ export const buildFundFilters = (query: FundFilters): BaseFilters => {
     }
 
     // Getiri filtreleri
-    ['yield_1m', 'yield_3m', 'yield_6m', 'yield_ytd', 'yield_1y', 'yield_3y', 'yield_5y'].forEach(field => {
-        const filter = buildYieldFilter(field, query[`min_${field}`] as string, query[`max_${field}`] as string);
-        if (filter) where[field] = filter;
+    ['yield_1d', 'yield_1w', 'yield_1m', 'yield_3m', 'yield_6m', 'yield_ytd', 'yield_1y', 'yield_3y', 'yield_5y'].forEach(field => {
+        if (query[field]) where[field] = query[field];
     });
 
     // Arama filtresi

@@ -1,4 +1,14 @@
-export type StartDate = 'last_5_years' | 'last_3_years' | 'last_1_year' | 'year_start' | 'last_6_months' | 'last_3_months' | 'last_1_month';
+export enum StartDate {
+    last_1_day = 'last_1_day',
+    last_1_week = 'last_1_week',
+    last_1_month = 'last_1_month',
+    last_3_months = 'last_3_months',
+    last_6_months = 'last_6_months',
+    last_1_year = 'last_1_year',
+    last_3_years = 'last_3_years',
+    last_5_years = 'last_5_years',
+    year_start = 'year_start'
+}
 
 export type YearlyIncreaseType = 'percentage' | 'amount';
 
@@ -16,16 +26,16 @@ export interface InvestmentAnalysisRequest {
     includeMonthlyDetails?: boolean;
 }
 
-export interface MonthlyDetail {
+export interface PeriodDetail {
     date: string;              // YYYY-MM-DD formatında
-    investment: number;        // O ay yapılan yatırım
+    investment: number;        // O dönemde yapılan yatırım
     totalInvestment: number;   // O ana kadar yapılan toplam yatırım
     unitPrice: number;         // Fon birim fiyatı
-    units: number;             // O ay alınan pay adedi
+    units: number;             // O dönemde alınan pay adedi
     totalUnits: number;        // Toplam pay adedi
-    value: number;             // Yatırımın o ayki değeri
-    monthlyChange: number;      // O ayki değişim (tutar)
-    monthlyChangePercentage: number;   // O ayki değişim (%)
+    value: number;             // Yatırımın o dönemdeki değeri
+    periodChange: number;      // O dönemdeki değişim (tutar)
+    periodChangePercentage: number;   // O dönemdeki değişim (%)
     totalYield: number;        // O ana kadarki toplam getiri (tutar)
     totalYieldPercentage: number;     // O ana kadarki toplam getiri (%)
 }
@@ -42,5 +52,5 @@ export interface InvestmentAnalysisResponse {
     management_company_id: string;
     title: string;
     summary: InvestmentAnalysisSummary;
-    monthlyDetails?: MonthlyDetail[];
+    periodDetails?: PeriodDetail[];
 } 

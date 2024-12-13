@@ -106,7 +106,19 @@ Performansı artırmak için önbellek kullanılmaktadır:
                             description: 'Sıralama alanı',
                             schema: {
                                 type: 'string',
-                                enum: ['code', 'title', 'total_funds', 'avg_yield_1m', 'avg_yield_6m', 'avg_yield_ytd', 'avg_yield_1y', 'avg_yield_3y', 'avg_yield_5y'],
+                                enum: [
+                                    'code',
+                                    'title',
+                                    'total_funds',
+                                    'avg_yield_1d',
+                                    'avg_yield_1w',
+                                    'avg_yield_1m',
+                                    'avg_yield_6m',
+                                    'avg_yield_ytd',
+                                    'avg_yield_1y',
+                                    'avg_yield_3y',
+                                    'avg_yield_5y'
+                                ],
                                 default: 'code'
                             }
                         },
@@ -217,23 +229,44 @@ Performansı artırmak için önbellek kullanılmaktadır:
                                             company: {
                                                 code: 'APY',
                                                 title: 'ATA PORTFÖY YÖNETİMİ A.Ş.',
-                                                logo: 'http://localhost:3000/public/logos/ata_portfoy_icon.png'
-                                            },
-                                            stats: {
-                                                total_funds: 42,
-                                                avg_yield_1m: 2.45,
-                                                avg_yield_6m: 15.67,
-                                                avg_yield_ytd: 12.34,
-                                                avg_yield_1y: 28.91,
-                                                avg_yield_3y: 95.67,
-                                                avg_yield_5y: 156.78,
+                                                logo: 'http://localhost:3000/public/logos/ata_portfoy_icon.png',
+                                                total_funds: 22,
+                                                avg_yield_1d: -0.0042,
+                                                avg_yield_1w: 1.0066,
+                                                avg_yield_1m: 5.4131,
+                                                avg_yield_6m: 10.8271,
+                                                avg_yield_ytd: 43.3379,
+                                                avg_yield_1y: 45.65,
+                                                avg_yield_3y: 313.4222,
+                                                avg_yield_5y: 1750.9015,
                                                 best_performing_funds: [
                                                     {
-                                                        code: 'AAK',
-                                                        title: 'ATA PORTFÖY ÇOKLU VARLIK DEĞİŞKEN FONU',
-                                                        type: 'Hisse Senedi',
-                                                        yield_1m: 3.45,
-                                                        yield_1y: 32.45
+                                                        code: "NKJ",
+                                                        title: "ATA PORTFÖY GIG SİGORTA SERBEST (TL) ÖZEL FON",
+                                                        type: "serbest",
+                                                        yield_1d: 0.3287,
+                                                        yield_1w: 3.28,
+                                                        yield_1m: 12.2927,
+                                                        yield_3m: 17.3773,
+                                                        yield_6m: 17.4993,
+                                                        yield_ytd: 92.9748,
+                                                        yield_1y: 104.1684,
+                                                        yield_3y: 665.8415,
+                                                        yield_5y: null
+                                                    },
+                                                    {
+                                                        code: "PKF",
+                                                        title: "ATA PORTFÖY ALTIN KATILIM FONU",
+                                                        type: "katilim",
+                                                        yield_1d: 0.115,
+                                                        yield_1w: 0.397,
+                                                        yield_1m: 2.511,
+                                                        yield_3m: 9.5514,
+                                                        yield_6m: 26.1391,
+                                                        yield_ytd: 54.4689,
+                                                        yield_1y: 61.8553,
+                                                        yield_3y: null,
+                                                        yield_5y: null
                                                     }
                                                 ]
                                             }
@@ -284,7 +317,22 @@ Performansı artırmak için önbellek kullanılmaktadır:
                             description: 'Fon tipi',
                             schema: {
                                 type: 'string',
-                                enum: ['Hisse Senedi Şemsiye Fonu', 'Para Piyasası Şemsiye Fonu', 'Serbest Şemsiye Fonu']
+                                enum: [
+                                    'altin',
+                                    'borclanma_araclari',
+                                    'degisken',
+                                    'fon_sepeti',
+                                    'gumus',
+                                    'hisse_senedi',
+                                    'hisse_senedi_yogun',
+                                    'karma',
+                                    'katilim',
+                                    'kiymetli_madenler',
+                                    'para_piyasasi',
+                                    'serbest',
+                                    'yabanci',
+                                    'diger'
+                                ]
                             }
                         },
                         {
@@ -294,7 +342,7 @@ Performansı artırmak için önbellek kullanılmaktadır:
                             schema: {
                                 type: 'string'
                             }
-                        },                        
+                        },
                         {
                             name: 'code',
                             in: 'query',
@@ -326,7 +374,40 @@ Performansı artırmak için önbellek kullanılmaktadır:
                             description: 'Sıralama alanı',
                             schema: {
                                 type: 'string',
-                                enum: ['code', 'title', 'type', 'yield_1m', 'yield_3m', 'yield_6m', 'yield_ytd', 'yield_1y', 'yield_3y', 'yield_5y'],
+                                enum: [
+                                    // Fund temel alanları
+                                    'code',
+                                    'title',
+                                    'tefas',
+
+                                    // FundYield alanları
+                                    'yield_1d',
+                                    'yield_1w',
+                                    'yield_1m',
+                                    'yield_3m',
+                                    'yield_6m',
+                                    'yield_ytd',
+                                    'yield_1y',
+                                    'yield_3y',
+                                    'yield_5y',
+
+                                    // FundHistoricalValue alanları
+                                    'last_historical_value.value',
+                                    'last_historical_value.aum',
+                                    'last_historical_value.shares_active',
+                                    'last_historical_value.cumulative_cashflow',
+                                    'last_historical_value.investor_count',
+
+                                    // FundManagementCompany alanları
+                                    'management_company.code',
+                                    'management_company.title',
+
+                                    // FundType alanları
+                                    'fund_type.type',
+                                    'fund_type.short_name',
+                                    'fund_type.long_name',
+                                    'fund_type.group_name'
+                                ],
                                 default: 'code'
                             }
                         },
@@ -512,9 +593,18 @@ Performansı artırmak için önbellek kullanılmaktadır:
                             description: 'Başlangıç tarihi',
                             schema: {
                                 type: 'string',
-                                enum: ['last_5_years', 'last_3_years', 'last_1_year', 'year_start', 'last_6_months', 'last_3_months', 'last_1_month']
+                                enum: ['last_1_day',
+                                    'last_1_week',
+                                    'last_1_month',
+                                    'last_3_months',
+                                    'last_6_months',
+                                    'year_start',
+                                    'last_1_year',
+                                    'last_3_years',
+                                    'last_5_years'
+                                ]
                             },
-                            example: 'last_3_years'
+                            example: 'year_start'
                         },
                         {
                             name: 'initialInvestment',
@@ -786,7 +876,15 @@ Performansı artırmak için önbellek kullanılmaktadır:
                             description: 'Sıralama alanı',
                             schema: {
                                 type: 'string',
-                                enum: ['date', 'value'],
+                                enum: [
+                                    'date',
+                                    'value',
+                                    'aum',
+                                    'shares_active',
+                                    'yield',
+                                    'cumulative_cashflow',
+                                    'investor_count'
+                                ],
                                 default: 'date'
                             },
                             example: 'date'
@@ -811,26 +909,82 @@ Performansı artırmak için önbellek kullanılmaktadır:
                                     schema: {
                                         type: 'array',
                                         items: {
-                                            $ref: '#/components/schemas/FundHistoricalValue'
+                                            type: 'object',
+                                            properties: {
+                                                code: {
+                                                    type: 'string',
+                                                    description: 'Fon kodu',
+                                                    example: 'AAK'
+                                                },
+                                                date: {
+                                                    type: 'string',
+                                                    format: 'date',
+                                                    description: 'Değer tarihi',
+                                                    example: '2023-12-29'
+                                                },
+                                                value: {
+                                                    type: 'number',
+                                                    format: 'float',
+                                                    description: 'Fon birim pay değeri',
+                                                    example: 16.170459
+                                                },
+                                                aum: {
+                                                    type: 'number',
+                                                    format: 'float',
+                                                    description: 'Portföy büyüklüğü',
+                                                    example: 97469445.00
+                                                },
+                                                shares_active: {
+                                                    type: 'number',
+                                                    format: 'float',
+                                                    description: 'Pay sayısı',
+                                                    example: 6027624.00
+                                                },
+                                                yield: {
+                                                    type: 'number',
+                                                    format: 'float',
+                                                    description: 'Günlük getiri (%)',
+                                                    example: 1.064131
+                                                },
+                                                cumulative_cashflow: {
+                                                    type: 'number',
+                                                    format: 'float',
+                                                    description: 'Kümülatif nakit akışı',
+                                                    example: -29122.996659,
+                                                    nullable: true
+                                                },
+                                                investor_count: {
+                                                    type: 'integer',
+                                                    description: 'Yatırımcı sayısı',
+                                                    example: 666
+                                                }
+                                            }
                                         },
                                         example: [
                                             {
-                                                code: 'AAK',
-                                                date: '2023-12-31',
-                                                value: 12.345
+                                                "code": "AAK",
+                                                "date": "2023-12-29",
+                                                "value": 16.170459,
+                                                "aum": 97469445.00,
+                                                "shares_active": 6027624.00,
+                                                "yield": 1.064131,
+                                                "cumulative_cashflow": -29122.996659,
+                                                "investor_count": 666
                                             },
                                             {
-                                                code: 'AAK',
-                                                date: '2023-12-30',
-                                                value: 12.123
+                                                "code": "AAK",
+                                                "date": "2023-12-28",
+                                                "value": 16.000196,
+                                                "aum": 96471981.00,
+                                                "shares_active": 6029425.00,
+                                                "yield": 0.064597,
+                                                "cumulative_cashflow": null,
+                                                "investor_count": 665
                                             }
                                         ]
                                     }
                                 }
                             }
-                        },
-                        '404': {
-                            $ref: '#/components/responses/NotFound'
                         },
                         '500': {
                             $ref: '#/components/responses/ValidationError'
@@ -886,114 +1040,276 @@ Performansı artırmak için önbellek kullanılmaktadır:
                         code: {
                             type: 'string',
                             description: 'Şirket kodu',
-                            example: 'APY',
-                            minLength: 2,
-                            maxLength: 10
+                            example: 'APY'
                         },
                         title: {
                             type: 'string',
                             description: 'Şirket adı',
-                            example: 'ATA PORTFÖY YÖNETİMİ A.Ş.',
-                            minLength: 3,
-                            maxLength: 100
+                            example: 'ATA PORTFÖY YÖNETİMİ A.Ş.'
                         },
                         logo: {
                             type: 'string',
                             description: 'Şirket logosu URL',
-                            example: 'http://localhost:3000/public/logos/ata_portfoy_icon.png',
-                            format: 'uri'
+                            example: 'http://localhost:3000/public/logos/ata_portfoy_icon.png'
+                        },
+                        total_funds: {
+                            type: 'integer',
+                            description: 'Toplam fon sayısı',
+                            example: 42
+                        },
+                        avg_yield_1d: {
+                            type: 'number',
+                            format: 'float',
+                            description: '1 günlük ortalama getiri',
+                            example: 0.45
+                        },
+                        avg_yield_1w: {
+                            type: 'number',
+                            format: 'float',
+                            description: '1 haftalık ortalama getiri',
+                            example: 1.23
+                        },
+                        avg_yield_1m: {
+                            type: 'number',
+                            format: 'float',
+                            description: '1 aylık ortalama getiri',
+                            example: 2.45
+                        },
+                        avg_yield_6m: {
+                            type: 'number',
+                            format: 'float',
+                            description: '6 aylık ortalama getiri',
+                            example: 15.67
+                        },
+                        avg_yield_ytd: {
+                            type: 'number',
+                            format: 'float',
+                            description: 'Yıl başından bugüne ortalama getiri',
+                            example: 12.34
+                        },
+                        avg_yield_1y: {
+                            type: 'number',
+                            format: 'float',
+                            description: '1 yıllık ortalama getiri',
+                            example: 28.91
+                        },
+                        avg_yield_3y: {
+                            type: 'number',
+                            format: 'float',
+                            description: '3 yıllık ortalama getiri',
+                            example: 95.67
+                        },
+                        avg_yield_5y: {
+                            type: 'number',
+                            format: 'float',
+                            description: '5 yıllık ortalama getiri',
+                            example: 156.78
                         }
                     }
                 },
                 FundYield: {
                     type: 'object',
-                    required: ['code', 'management_company_id', 'title', 'type'],
+                    required: ['code', 'title', 'type'],
                     properties: {
                         code: {
                             type: 'string',
                             description: 'Fon kodu',
-                            example: 'AAK',
-                            minLength: 2,
-                            maxLength: 10
-                        },
-                        management_company_id: {
-                            type: 'string',
-                            description: 'Yönetim şirketi kodu',
-                            example: 'APY',
-                            minLength: 2,
-                            maxLength: 10
+                            example: 'AAK'
                         },
                         title: {
                             type: 'string',
                             description: 'Fon adı',
-                            example: 'ATA PORTFÖY ÇOKLU VARLIK DEĞİŞKEN FONU',
-                            minLength: 3,
-                            maxLength: 100
-                        },
-                        type: {
-                            type: 'string',
-                            description: 'Fon tipi',
-                            example: 'Hisse Senedi',
-                            enum: [
-                                'Hisse Senedi',
-                                'Borçlanma Araçları',
-                                'Karma',
-                                'Para Piyasası',
-                                'Altın',
-                                'Serbest',
-                                'Diğer'
-                            ]
+                            example: 'ATA PORTFÖY ÇOKLU VARLIK DEĞİŞKEN FONU'
                         },
                         tefas: {
                             type: 'boolean',
-                            description: 'TEFAS\'ta işlem görme durumu',
+                            description: 'TEFAS\'ta işlem görüyor mu?',
                             example: true
+                        },
+                        yield_1d: {
+                            type: 'number',
+                            format: 'float',
+                            description: '1 günlük getiri (%)',
+                            example: '0.0929'
+                        },
+                        yield_1w: {
+                            type: 'number',
+                            format: 'float',
+                            description: '1 haftalık getiri (%)',
+                            example: '1.9517'
                         },
                         yield_1m: {
                             type: 'number',
                             format: 'float',
                             description: '1 aylık getiri (%)',
-                            example: 5.43
+                            example: '7.1268'
                         },
                         yield_3m: {
                             type: 'number',
                             format: 'float',
                             description: '3 aylık getiri (%)',
-                            example: 15.67
+                            example: '8.6255'
                         },
                         yield_6m: {
                             type: 'number',
                             format: 'float',
                             description: '6 aylık getiri (%)',
-                            example: 32.45
+                            example: '12.4757'
                         },
                         yield_ytd: {
                             type: 'number',
                             format: 'float',
                             description: 'Yıl başından itibaren getiri (%)',
-                            example: 28.91
+                            example: '49.6378'
                         },
                         yield_1y: {
                             type: 'number',
                             format: 'float',
                             description: '1 yıllık getiri (%)',
-                            example: 45.78
+                            example: '52.4460'
                         },
                         yield_3y: {
                             type: 'number',
                             format: 'float',
                             description: '3 yıllık getiri (%)',
-                            example: 123.45
+                            example: '309.1558'
                         },
                         yield_5y: {
                             type: 'number',
                             format: 'float',
                             description: '5 yıllık getiri (%)',
-                            example: 234.56
+                            example: '600.6521'
+                        },
+                        type: {
+                            type: 'string',
+                            description: 'Fon tipi',
+                            example: 'Değişken Fon',
+                            enum: [
+                                'Altın Fon',
+                                'Borçlanma Araçları Fonu',
+                                'Değişken Fon',
+                                'Fon Sepeti Fonu',
+                                'Gümüş Fon',
+                                'Hisse Senedi Fonu',
+                                'Hisse Senedi Yoğun Fon',
+                                'Karma Fon',
+                                'Katılım Fonu',
+                                'Kıymetli Madenler Fonu',
+                                'Para Piyasası Fonu',
+                                'Serbest Fon',
+                                'Yabancı Fon',
+                                'Diğer Fon'
+                            ]
                         },
                         management_company: {
-                            $ref: '#/components/schemas/FundManagementCompany',
-                            description: 'Portföy yönetim şirketi bilgileri'
+                            type: 'object',
+                            description: 'Portföy yönetim şirketi bilgileri',
+                            properties: {
+                                code: {
+                                    type: 'string',
+                                    description: 'Şirket kodu',
+                                    example: 'APY'
+                                },
+                                title: {
+                                    type: 'string',
+                                    description: 'Şirket adı',
+                                    example: 'ATA PORTFÖY YÖNETİMİ A.Ş.'
+                                },
+                                logo: {
+                                    type: 'string',
+                                    description: 'Şirket logo dosya adı',
+                                    example: 'ata_portfoy_icon.png'
+                                }
+                            }
+                        },
+                        fund_type: {
+                            type: 'object',
+                            description: 'Fon tipi detayları',
+                            properties: {
+                                type: {
+                                    type: 'string',
+                                    description: 'Fon tipi kodu',
+                                    example: 'degisken',
+                                    enum: [
+                                        'altin',
+                                        'borclanma_araclari',
+                                        'degisken',
+                                        'fon_sepeti',
+                                        'gumus',
+                                        'hisse_senedi',
+                                        'hisse_senedi_yogun',
+                                        'karma',
+                                        'katilim',
+                                        'kiymetli_madenler',
+                                        'para_piyasasi',
+                                        'serbest',
+                                        'yabanci',
+                                        'diger'
+                                    ]
+                                },
+                                short_name: {
+                                    type: 'string',
+                                    description: 'Fon tipi kısa adı',
+                                    example: 'Değişken Fon'
+                                },
+                                long_name: {
+                                    type: 'string',
+                                    description: 'Fon tipi uzun adı',
+                                    example: 'Değişken Şemsiye Fonu'
+                                },
+                                group_name: {
+                                    type: 'string',
+                                    description: 'Fon grubu adı',
+                                    example: 'Değişken Fonlar'
+                                }
+                            }
+                        },
+                        last_historical_value: {
+                            type: 'object',
+                            description: 'Son tarihli değerler',
+                            properties: {
+                                date: {
+                                    type: 'string',
+                                    format: 'date',
+                                    description: 'Değer tarihi',
+                                    example: '2024-12-12'
+                                },
+                                value: {
+                                    type: 'number',
+                                    format: 'float',
+                                    description: 'Fon birim pay değeri',
+                                    example: '24.356291'
+                                },
+                                aum: {
+                                    type: 'number',
+                                    format: 'float',
+                                    description: 'Dönem başı portföy büyüklüğü',
+                                    example: '75387892.00'
+                                },
+                                shares_active: {
+                                    type: 'number',
+                                    format: 'float',
+                                    description: 'Dönem başı pay sayısı',
+                                    example: '3098089.00'
+                                },
+                                yield: {
+                                    type: 'number',
+                                    format: 'float',
+                                    description: 'Günlük getiri (%)',
+                                    example: '0.092937'
+                                },
+                                cumulative_cashflow: {
+                                    type: 'number',
+                                    format: 'float',
+                                    description: 'Kümülatif nakit akışı',
+                                    example: '-625703.708462'
+                                },
+                                investor_count: {
+                                    type: 'integer',
+                                    description: 'Dönem başı yatırımcı sayısı',
+                                    example: 983
+                                }
+                            }
                         }
                     }
                 },
@@ -1026,20 +1342,17 @@ Performansı artırmak için önbellek kullanılmaktadır:
                         total: {
                             type: 'integer',
                             description: 'Toplam fon sayısı',
-                            example: 542
+                            example: 1
                         },
                         page: {
                             type: 'integer',
                             description: 'Mevcut sayfa',
-                            example: 1,
-                            minimum: 1
+                            example: 1
                         },
                         limit: {
                             type: 'integer',
                             description: 'Sayfa başına fon sayısı',
-                            example: 20,
-                            minimum: 1,
-                            maximum: 100
+                            example: 20
                         },
                         data: {
                             type: 'array',
@@ -1153,13 +1466,15 @@ Performansı artırmak için önbellek kullanılmaktadır:
                             code: 'APY',
                             title: 'ATA PORTFÖY YÖNETİMİ A.Ş.',
                             logo: 'ata_portfoy_icon.png',
-                            total_funds: 42,
-                            avg_yield_1m: 2.45,
-                            avg_yield_6m: 15.67,
-                            avg_yield_ytd: 12.34,
-                            avg_yield_1y: 28.91,
-                            avg_yield_3y: 95.67,
-                            avg_yield_5y: 156.78
+                            total_funds: 22,
+                            avg_yield_1d: -0.0042,
+                            avg_yield_1w: 1.0066,
+                            avg_yield_1m: 5.4131,
+                            avg_yield_6m: 10.8271,
+                            avg_yield_ytd: 43.3379,
+                            avg_yield_1y: 45.65,
+                            avg_yield_3y: 313.4222,
+                            avg_yield_5y: 1750.9015,
                         }
                     ]
                 },
@@ -1169,37 +1484,152 @@ Performansı artırmak için önbellek kullanılmaktadır:
                         company: {
                             $ref: '#/components/schemas/FundManagementCompany'
                         },
-                        stats: {
-                            $ref: '#/components/schemas/CompanyStatistics'
-                        }
-                    },
-                    example: {
-                        company: {
-                            code: 'APY',
-                            title: 'ATA PORTFÖY ÇOKLU VARLIK DEĞİŞKEN FONU',
-                            logo: 'http://localhost:3000/public/logos/ata_portfoy_icon.png'
-                        },
-                        stats: {
-                            total_funds: 42,
-                            avg_yield_1m: 2.45,
-                            avg_yield_6m: 15.67,
-                            avg_yield_ytd: 12.34,
-                            avg_yield_1y: 28.91,
-                            avg_yield_3y: 95.67,
-                            avg_yield_5y: 156.78,
-                            best_performing_funds: [
-                                {
-                                    code: 'AAK',
-                                    title: 'ATA PORTFÖY ÇOKLU VARLIK DEĞİŞKEN FONU',
-                                    type: 'Hisse Senedi',
-                                    yield_1m: 3.45,
-                                    yield_6m: 18.23,
-                                    yield_ytd: 15.67,
-                                    yield_1y: 32.45,
-                                    yield_3y: 102.34,
-                                    yield_5y: 178.90
+                        best_performing_funds: {
+                            type: 'array',
+                            items: {
+                                type: 'object',
+                                properties: {
+                                    code: {
+                                        type: 'string',
+                                        description: 'Fon kodu',
+                                        example: 'AAK'
+                                    },
+                                    title: {
+                                        type: 'string',
+                                        description: 'Fon adı',
+                                        example: 'ATA PORTFÖY ÇOKLU VARLIK DEĞİŞKEN FONU'
+                                    },
+                                    type: {
+                                        type: 'string',
+                                        description: 'Fon tipi',
+                                        example: 'degisken'
+                                    },
+                                    yield_1d: {
+                                        type: 'number',
+                                        format: 'float',
+                                        description: '1 günlük getiri',
+                                        example: 0.45
+                                    },
+                                    yield_1w: {
+                                        type: 'number',
+                                        format: 'float',
+                                        description: '1 haftalık getiri',
+                                        example: 1.23
+                                    },
+                                    yield_1m: {
+                                        type: 'number',
+                                        format: 'float',
+                                        description: '1 aylık getiri',
+                                        example: 3.45
+                                    },
+                                    yield_3m: {
+                                        type: 'number',
+                                        format: 'float',
+                                        description: '3 aylık getiri',
+                                        example: 8.90
+                                    },
+                                    yield_6m: {
+                                        type: 'number',
+                                        format: 'float',
+                                        description: '6 aylık getiri',
+                                        example: 18.23
+                                    },
+                                    yield_ytd: {
+                                        type: 'number',
+                                        format: 'float',
+                                        description: 'Yıl başından bugüne getiri',
+                                        example: 15.67
+                                    },
+                                    yield_1y: {
+                                        type: 'number',
+                                        format: 'float',
+                                        description: '1 yıllık getiri',
+                                        example: 32.45
+                                    },
+                                    yield_3y: {
+                                        type: 'number',
+                                        format: 'float',
+                                        description: '3 yıllık getiri',
+                                        example: 102.34
+                                    },
+                                    yield_5y: {
+                                        type: 'number',
+                                        format: 'float',
+                                        description: '5 yıllık getiri',
+                                        example: 178.90
+                                    }
                                 }
-                            ]
+                            }
+                        },
+                        funds: {
+                            type: 'array',
+                            items: {
+                                type: 'object',
+                                properties: {
+                                    code: {
+                                        type: 'string',
+                                        description: 'Fon kodu'
+                                    },
+                                    title: {
+                                        type: 'string',
+                                        description: 'Fon adı'
+                                    },
+                                    type: {
+                                        type: 'string',
+                                        description: 'Fon tipi'
+                                    },
+                                    yield: {
+                                        type: 'object',
+                                        properties: {
+                                            yield_1d: {
+                                                type: 'number',
+                                                format: 'float',
+                                                description: '1 günlük getiri'
+                                            },
+                                            yield_1w: {
+                                                type: 'number',
+                                                format: 'float',
+                                                description: '1 haftalık getiri'
+                                            },
+                                            yield_1m: {
+                                                type: 'number',
+                                                format: 'float',
+                                                description: '1 aylık getiri'
+                                            },
+                                            yield_3m: {
+                                                type: 'number',
+                                                format: 'float',
+                                                description: '3 aylık getiri'
+                                            },
+                                            yield_6m: {
+                                                type: 'number',
+                                                format: 'float',
+                                                description: '6 aylık getiri'
+                                            },
+                                            yield_ytd: {
+                                                type: 'number',
+                                                format: 'float',
+                                                description: 'Yıl başından bugüne getiri'
+                                            },
+                                            yield_1y: {
+                                                type: 'number',
+                                                format: 'float',
+                                                description: '1 yıllık getiri'
+                                            },
+                                            yield_3y: {
+                                                type: 'number',
+                                                format: 'float',
+                                                description: '3 yıllık getiri'
+                                            },
+                                            yield_5y: {
+                                                type: 'number',
+                                                format: 'float',
+                                                description: '5 yıllık getiri'
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }

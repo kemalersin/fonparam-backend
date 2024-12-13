@@ -1,26 +1,105 @@
 import { Request, Response } from 'express';
-import { FundYield, FundManagementCompany, FundHistoricalValue } from '../models';
+import { FundYield, FundManagementCompany, FundHistoricalValue, Fund, FundType } from '../models';
 import { buildFundFilters, buildHistoricalValueFilters } from '../utils/queryBuilder';
 import { FundFilters, TypedRequest } from '../types';
-import { Op, FindOptions } from 'sequelize';
+import { Op, FindOptions, Order, Sequelize } from 'sequelize';
 import sequelize from '../config/database';
 
 // Ortak include tanımları
-const FUND_INCLUDES = {
+const INCLUDES = {
     MANAGEMENT_COMPANY: {
         model: FundManagementCompany,
+        as: 'management_company',
         attributes: ['code', 'title', 'logo'],
-        as: 'management_company'
+        required: true
+    },
+    FUND_TYPE: {
+        model: FundType,
+        as: 'fund_type',
+        required: true
+    },
+    YIELD: {
+        model: FundYield,
+        as: 'yield',
+        required: true
+    },
+    LAST_HISTORICAL_VALUE: {
+        model: FundHistoricalValue,
+        as: 'last_historical_value',
+        attributes: ['date', 'value', 'aum', 'shares_active', 'cumulative_cashflow', 'investor_count'],
+        required: false
     }
 };
 
-// Ortak attribute tanımları
-const FUND_ATTRIBUTES = {
-    COMPARISON: [
-        'code', 'title', 'type',
-        'yield_1m', 'yield_3m', 'yield_6m',
-        'yield_ytd', 'yield_1y', 'yield_3y', 'yield_5y'
-    ]
+// Ortak sıralama tanımları
+const SORT_FIELDS = {
+    // Fund temel alanları
+    code: ['code'],
+    title: ['title'],
+    tefas: ['tefas'],
+
+    // FundYield alanları
+    yield_1d: [{ model: FundYield, as: 'yield' }, 'yield_1d'],
+    yield_1w: [{ model: FundYield, as: 'yield' }, 'yield_1w'],
+    yield_1m: [{ model: FundYield, as: 'yield' }, 'yield_1m'],
+    yield_3m: [{ model: FundYield, as: 'yield' }, 'yield_3m'],
+    yield_6m: [{ model: FundYield, as: 'yield' }, 'yield_6m'],
+    yield_ytd: [{ model: FundYield, as: 'yield' }, 'yield_ytd'],
+    yield_1y: [{ model: FundYield, as: 'yield' }, 'yield_1y'],
+    yield_3y: [{ model: FundYield, as: 'yield' }, 'yield_3y'],
+    yield_5y: [{ model: FundYield, as: 'yield' }, 'yield_5y'],
+
+    // FundHistoricalValue alanları
+    'last_historical_value.value': [{ model: FundHistoricalValue, as: 'last_historical_value' }, 'value'],
+    'last_historical_value.aum': [{ model: FundHistoricalValue, as: 'last_historical_value' }, 'aum'],
+    'last_historical_value.shares_active': [{ model: FundHistoricalValue, as: 'last_historical_value' }, 'shares_active'],
+    'last_historical_value.cumulative_cashflow': [{ model: FundHistoricalValue, as: 'last_historical_value' }, 'cumulative_cashflow'],
+    'last_historical_value.investor_count': [{ model: FundHistoricalValue, as: 'last_historical_value' }, 'investor_count'],
+
+    // FundManagementCompany alanları
+    'management_company.code': [{ model: FundManagementCompany, as: 'management_company' }, 'code'],
+    'management_company.title': [{ model: FundManagementCompany, as: 'management_company' }, 'title'],
+
+    // FundType alanları
+    'fund_type.type': [{ model: FundType, as: 'fund_type' }, 'type'],
+    'fund_type.short_name': [{ model: FundType, as: 'fund_type' }, 'short_name'],
+    'fund_type.long_name': [{ model: FundType, as: 'fund_type' }, 'long_name'],
+    'fund_type.group_name': [{ model: FundType, as: 'fund_type' }, 'group_name']
+} as const;
+
+const formatFundResponse = (fund: Fund) => {
+    const orgFund = fund.get({ plain: false });
+    const lastHistoricalValue = orgFund.last_historical_value;
+
+    return {
+        code: orgFund.code,
+        title: orgFund.title,
+        tefas: orgFund.tefas,
+        yield_1d: orgFund.yield?.yield_1d,
+        yield_1w: orgFund.yield?.yield_1w,
+        yield_1m: orgFund.yield?.yield_1m,
+        yield_3m: orgFund.yield?.yield_3m,
+        yield_6m: orgFund.yield?.yield_6m,
+        yield_ytd: orgFund.yield?.yield_ytd,
+        yield_1y: orgFund.yield?.yield_1y,
+        yield_3y: orgFund.yield?.yield_3y,
+        yield_5y: orgFund.yield?.yield_5y,
+        type: orgFund.fund_type.short_name,
+        management_company: orgFund.management_company,
+        fund_type: orgFund.fund_type,
+        last_historical_value: lastHistoricalValue || null
+    };
+};
+
+const formatPaginatedResponse = (funds: Fund[], total?: number, page?: number, limit?: number) => {
+    const data = funds.map(fund => formatFundResponse(fund));
+
+    return total ? {
+        total,
+        page,
+        limit,
+        data
+    } : data;
 };
 
 // Tüm fonları listele
@@ -29,29 +108,44 @@ export const listFunds = async (req: TypedRequest<FundFilters>, res: Response): 
         const filters = buildFundFilters(req.query);
         const sort = req.query.sort || 'title';
         const order = (req.query.order || 'ASC').toUpperCase() as 'ASC' | 'DESC';
-        
-        const { count, rows } = await FundYield.findAndCountAll({
-            ...filters,
-            include: [FUND_INCLUDES.MANAGEMENT_COMPANY],
-            order: [[sort, order]]
+
+        // Sıralama alanını kontrol et
+        const sortField = SORT_FIELDS[sort as keyof typeof SORT_FIELDS] || SORT_FIELDS.title;
+
+        const { count, rows } = await Fund.findAndCountAll({
+            where: filters.where,
+            limit: filters.limit,
+            offset: filters.offset,
+            attributes: ['code', 'title', 'tefas'],
+            include: [
+                INCLUDES.MANAGEMENT_COMPANY,
+                INCLUDES.FUND_TYPE,
+                INCLUDES.YIELD,
+                INCLUDES.LAST_HISTORICAL_VALUE
+            ],
+            order: [[...sortField, order]],
+            subQuery: false
         });
 
-        res.json({
-            total: count,
-            page: parseInt(req.query.page?.toString() || '1'),
-            limit: parseInt(req.query.limit?.toString() || '20'),
-            data: rows
-        });
+        const page = parseInt(req.query.page?.toString() || '1');
+        const limit = parseInt(req.query.limit?.toString() || '20');
+
+        res.json(formatPaginatedResponse(rows, count, page, limit));
     } catch (error) {
-        res.status(500).json({ error: (error as Error).message });
+        console.error('Fonlar listelenirken hata oluştu:', error);
+        res.status(500).json({ error: 'Fonlar listelenirken bir hata oluştu' });
     }
 };
 
-// Tek bir fon detayı
-export const getFundDetails = async (req: Request<{ code: string }>, res: Response): Promise<void> => {
+// Tek fon detayı
+export const getFundDetails = async (req: Request, res: Response): Promise<void> => {
     try {
-        const fund = await FundYield.findByPk(req.params.code, {
-            include: [FUND_INCLUDES.MANAGEMENT_COMPANY]
+        const { code } = req.params;
+
+        const fund = await Fund.findOne({
+            where: { code },
+            attributes: ['code', 'title', 'tefas'],
+            include: Object.values(INCLUDES),
         });
 
         if (!fund) {
@@ -59,177 +153,161 @@ export const getFundDetails = async (req: Request<{ code: string }>, res: Respon
             return;
         }
 
-        res.json(fund);
+        res.json(formatFundResponse(fund));
     } catch (error) {
-        res.status(500).json({ error: (error as Error).message });
+        console.error('Fon detayı alınırken hata oluştu:', error);
+        res.status(500).json({ error: 'Fon detayı alınırken bir hata oluştu' });
     }
 };
 
 // Fonun geçmiş değerleri
-export const getFundHistoricalValues = async (
-    req: Request<{ code: string }, any, any, { 
-        start_date?: string; 
-        end_date?: string; 
-        interval?: string; 
-        sort?: string; 
-        order?: 'ASC' | 'DESC' 
-    }>, 
-    res: Response
-): Promise<void> => {
+export const getFundHistoricalValues = async (req: Request, res: Response): Promise<void> => {
     try {
-        const filters = buildHistoricalValueFilters(req.query);
+        const { code } = req.params;
         const sort = req.query.sort || 'date';
         const order = (req.query.order || 'DESC').toUpperCase() as 'ASC' | 'DESC';
-        
-        const history = await FundHistoricalValue.findAll({
+
+        // Sıralama alanını kontrol et
+        const validSortFields = ['date', 'value', 'aum', 'shares_active', 'yield', 'cumulative_cashflow', 'investor_count'];
+        if (!validSortFields.includes(sort as string)) {
+            res.status(400).json({ error: 'Geçersiz sıralama alanı' });
+            return;
+        }
+
+        const filters = buildHistoricalValueFilters(req.query);
+        const values = await FundHistoricalValue.findAll({
             where: {
-                code: req.params.code,
+                code,
                 ...filters.where
             },
-            order: [[sort, order]]
+            order: [[sort as string, order]],
+            raw: true
         });
 
-        res.json(history);
+        // Sayısal değerleri dönüştür
+        const transformedValues = values.map(value => ({
+            code: value.code,
+            date: value.date,
+            value: value.value ? Number(value.value) : null,
+            aum: value.aum ? Number(value.aum) : null,
+            shares_active: value.shares_active ? Number(value.shares_active) : null,
+            yield: value.yield ? Number(value.yield) : null,
+            cumulative_cashflow: value.cumulative_cashflow ? Number(value.cumulative_cashflow) : null,
+            investor_count: value.investor_count
+        }));
+
+        res.json(transformedValues);
     } catch (error) {
-        res.status(500).json({ error: (error as Error).message });
+        console.error('Geçmiş değerler getirilirken hata oluştu:', error);
+        res.status(500).json({ error: 'Geçmiş değerler getirilirken bir hata oluştu' });
     }
 };
 
-// Fonun getirilerini karşılaştır
-export const compareFunds = async (
-    req: Request<any, any, any, { codes: string }>, 
-    res: Response
-): Promise<void> => {
+// Fonları karşılaştır
+export const compareFunds = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { codes } = req.query;
-        if (!codes) {
-            res.status(400).json({ error: 'Karşılaştırılacak fon kodları gerekli' });
+        const fundCodes = req.query.codes?.toString().split(',');
+
+        if (!fundCodes || fundCodes.length < 2 || fundCodes.length > 5) {
+            res.status(400).json({ error: 'En az 2, en fazla 5 fon karşılaştırılabilir' });
             return;
         }
 
-        const fundCodes = codes.split(',');
-        const queryOptions: FindOptions = {
+        const funds = await Fund.findAll({
             where: { code: { [Op.in]: fundCodes } },
-            include: [FUND_INCLUDES.MANAGEMENT_COMPANY],
-            attributes: FUND_ATTRIBUTES.COMPARISON
-        };
-
-        const funds = await FundYield.findAll(queryOptions);
-
-        if (funds.length === 0) {
-            res.status(404).json({ error: 'Belirtilen fonlar bulunamadı' });
-            return;
-        }
+            attributes: ['code', 'title', 'tefas'],
+            include: Object.values(INCLUDES),
+        });
 
         if (funds.length !== fundCodes.length) {
-            const foundCodes = funds.map(f => f.code);
+            const foundCodes = funds.map(fund => fund.code);
             const missingCodes = fundCodes.filter(code => !foundCodes.includes(code));
-            res.status(404).json({ 
-                error: 'Bazı fonlar bulunamadı',
-                missing_codes: missingCodes
-            });
+            res.status(404).json({ error: 'Bazı fonlar bulunamadı', missing_codes: missingCodes });
             return;
         }
 
-        res.json(funds);
+        res.json(formatPaginatedResponse(funds));
     } catch (error) {
         res.status(500).json({ error: (error as Error).message });
     }
 };
 
-export const getTopPerformingFunds = async (req: Request, res: Response) => {
+// En iyi performanslı fonları getir
+export const getTopPerformingFunds = async (req: Request, res: Response): Promise<Response> => {
     try {
-        const { funds: fundCodes } = req.query;
+        const timestamp = Date.now();
 
-        if (fundCodes) {
-            // Referans fonların performansına yakın fonları getir
-            const referenceFundCodes = Array.isArray(fundCodes) 
-                ? fundCodes.map(code => String(code))
-                : String(fundCodes).split(',');
-            const referenceFunds = await FundYield.findAll({
-                where: {
-                    code: { [Op.in]: referenceFundCodes },
-                    yield_1y: {
-                        [Op.ne]: null
-                    }
-                },
-                include: [FUND_INCLUDES.MANAGEMENT_COMPANY]
-            });
+        // Referans fonlar belirtilmişse, benzer performanslı fonları getir
+        if (req.query.funds) {
+            const referenceCodes = req.query.funds.toString().split(',');
+            const referenceFunds = (await Fund.findAll({
+                where: { code: { [Op.in]: referenceCodes } },
+                include: [INCLUDES.YIELD]
+            })).map(fund => fund.get({ plain: true }));
 
             if (!referenceFunds.length) {
-                return res.status(404).json({ error: 'Belirtilen referans fonlar bulunamadı' });
+                return res.status(404).json({ error: 'Referans fonlar bulunamadı' });
             }
 
-            // Referans fonların ortalama performansını hesapla
-            const validFunds = referenceFunds.filter(fund => fund.yield_1y != null);
+            // Referans fonların ortalama getirisini hesapla
+            const validFunds = referenceFunds.filter(fund => fund.yield?.yield_1y != null);
             if (!validFunds.length) {
-                return res.status(404).json({ error: 'Referans fonların 1 yıllık getiri verisi bulunamadı' });
-            }
-            
-            const avgYield = validFunds.reduce((sum, fund) => sum + Number(fund.yield_1y), 0) / validFunds.length;
-            
-            if (isNaN(avgYield)) {
-                return res.status(500).json({ error: 'Ortalama getiri hesaplanamadı' });
+                return res.status(400).json({ error: 'Referans fonların 1 yıllık getirisi bulunamadı' });
             }
 
-            const yieldRange = 5;
-            const minYield = avgYield - yieldRange;
-            const maxYield = avgYield + yieldRange;
-            const timestamp = Date.now();
+            const avgYield = validFunds.reduce((sum, fund) => sum + Number(fund.yield.yield_1y), 0) / validFunds.length;
+            const minYield = avgYield - 10;
+            const maxYield = avgYield + 10;
 
-            const funds = await FundYield.findAll({
+            const funds = await Fund.findAll({
                 where: {
-                    [Op.and]: [
-                        { yield_1y: { [Op.ne]: null } },
-                        { yield_1y: { [Op.gt]: 0 } },
-                        { yield_1y: { [Op.between]: [minYield, maxYield] } },
-                        { code: { [Op.notIn]: referenceFundCodes } }
-                    ]
+                    code: { [Op.notIn]: referenceCodes }
                 },
-                include: [{
-                    model: FundManagementCompany,
-                    as: 'management_company',
-                    required: true
-                }],
-                order: [
-                    sequelize.literal(`RAND(${timestamp})`),
-                    ['yield_1y', 'DESC']
+                attributes: ['code', 'title', 'tefas'],
+                include: [
+                    INCLUDES.MANAGEMENT_COMPANY,
+                    INCLUDES.FUND_TYPE,
+                    {
+                        ...INCLUDES.YIELD,
+                        where: {
+                            yield_1y: {
+                                [Op.between]: [minYield, maxYield]
+                            }
+                        }
+                    },
+                    INCLUDES.LAST_HISTORICAL_VALUE
                 ],
+                order: [sequelize.literal(`RAND(${timestamp})`), ['code', 'ASC']],
                 limit: 10
             });
 
-            if (!funds.length) {
-                return res.status(404).json({ error: 'Benzer performansta fon bulunamadı' });
-            }
-
-            return res.json(funds);
+            return res.json(formatPaginatedResponse(funds, funds.length, 1, 10));
         }
 
         // Referans fon belirtilmemişse en iyi performanslı fonlardan rastgele 10 tane getir
-        const timestamp = Date.now(); // Her sorguda farklı bir değer
-        const topFunds = await FundYield.findAll({
-            where: sequelize.literal('yield_1y IS NOT NULL AND yield_1y > 50'),
-            include: [{
-                model: FundManagementCompany,
-                as: 'management_company',
-                required: true
-            }],
+        const topFunds = await Fund.findAll({
+            attributes: ['code', 'title', 'tefas'],
+            include: [
+                INCLUDES.MANAGEMENT_COMPANY,
+                INCLUDES.FUND_TYPE,
+                {
+                    ...INCLUDES.YIELD,
+                    where: sequelize.literal('yield_1y IS NOT NULL AND yield_1y > 50')
+                },
+                INCLUDES.LAST_HISTORICAL_VALUE
+            ],
             order: [
                 sequelize.literal(`RAND(${timestamp})`),
-                ['yield_1y', 'DESC']
+                ['code', 'ASC']
             ],
             limit: 10
         });
 
-        if (!topFunds.length) {
-            return res.status(404).json({ error: 'Yüksek performanslı fon bulunamadı' });
-        }
-
-        res.json(topFunds);
+        res.json(formatPaginatedResponse(topFunds));
     } catch (error) {
-        res.status(500).json({
+        return res.status(500).json({
             error: 'Fonlar getirilirken bir hata oluştu',
-            message: error instanceof Error ? error.message : 'Bilinmeyen hata'
+            details: (error as Error).message
         });
     }
 }; 

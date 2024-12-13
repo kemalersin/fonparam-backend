@@ -15,7 +15,7 @@ router.get('/',
 router.get('/:code', 
     rateLimiter('company-detail', RATE_LIMITS.COMPANY_DETAIL.MAX, RATE_LIMITS.COMPANY_DETAIL.WINDOW_MINUTES),
     validateCompanyCode, 
-    cacheMiddleware(CACHE_DURATIONS.COMPANY_DETAIL), 
+    //cacheMiddleware(CACHE_DURATIONS.COMPANY_DETAIL), 
     getCompanyDetails
 );
 

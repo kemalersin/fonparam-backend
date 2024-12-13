@@ -16,21 +16,31 @@ export const listFundsValidation: ValidationChain[] = [
     query('type').optional().isString(),
     query('management_company').optional().isString().isLength({ max: 10 }),
     query('tefas').optional().isBoolean(),
-    query('min_yield_1m').optional().isFloat(),
-    query('max_yield_1m').optional().isFloat(),
-    query('min_yield_3m').optional().isFloat(),
-    query('max_yield_3m').optional().isFloat(),
-    query('min_yield_6m').optional().isFloat(),
-    query('max_yield_6m').optional().isFloat(),
-    query('min_yield_ytd').optional().isFloat(),
-    query('max_yield_ytd').optional().isFloat(),
-    query('min_yield_1y').optional().isFloat(),
-    query('max_yield_1y').optional().isFloat(),
-    query('min_yield_3y').optional().isFloat(),
-    query('max_yield_3y').optional().isFloat(),
-    query('min_yield_5y').optional().isFloat(),
-    query('max_yield_5y').optional().isFloat(),
-    query('sort').optional().isIn(['code', 'title', 'type', 'yield_1m', 'yield_3m', 'yield_6m', 'yield_ytd', 'yield_1y', 'yield_3y', 'yield_5y']),
+    query('sort').optional().isIn([
+        'code',
+        'title',
+        'tefas',
+        'yield_1d',
+        'yield_1w',
+        'yield_1m',
+        'yield_3m',
+        'yield_6m',
+        'yield_ytd',
+        'yield_1y',
+        'yield_3y',
+        'yield_5y',
+        'last_historical_value.value',
+        'last_historical_value.aum',
+        'last_historical_value.shares_active',
+        'last_historical_value.cumulative_cashflow',
+        'last_historical_value.investor_count',
+        'management_company.code',
+        'management_company.title',
+        'fund_type.type',
+        'fund_type.short_name',
+        'fund_type.long_name',
+        'fund_type.group_name'
+    ]),
     query('order').optional().isIn(['asc', 'desc', 'ASC', 'DESC']),
     query('page').optional().isInt({ min: 1 }),
     query('limit').optional().isInt({ min: 1, max: 100 }),
@@ -94,13 +104,17 @@ export const validateCompareFunds = [
 // Şirket listesi için validasyon kuralları
 export const listCompaniesValidation: ValidationChain[] = [
     query('search').optional().isString().isLength({ min: 1, max: 100 }),
-    query('min_total_funds').optional().isInt({ min: 0 }),
-    query('max_total_funds').optional().isInt({ min: 0 }),
-    query('min_avg_yield_1m').optional().isFloat(),
-    query('max_avg_yield_1m').optional().isFloat(),
-    query('min_avg_yield_1y').optional().isFloat(),
-    query('max_avg_yield_1y').optional().isFloat(),
-    query('sort').optional().isIn(['title', 'total_funds', 'avg_yield_1m', 'avg_yield_1y']),
+    query('sort').optional().isIn(['code',
+        'title',
+        'total_funds',
+        'avg_yield_1d',
+        'avg_yield_1w',
+        'avg_yield_1m',
+        'avg_yield_6m',
+        'avg_yield_ytd',
+        'avg_yield_1y',
+        'avg_yield_3y',
+        'avg_yield_5y']),
     query('order').optional().isIn(['asc', 'desc', 'ASC', 'DESC']),
     query('page').optional().isInt({ min: 1 }),
     query('limit').optional().isInt({ min: 1, max: 100 })
@@ -163,7 +177,7 @@ export const validateComparisonRequest = [
         .withMessage('Karşılaştırılacak fon kodları gerekli')
         .custom((value: string) => {
             const codes = value.split(',').map(code => code.trim());
-            
+
             if (codes.length < 2) {
                 throw new Error('En az 2 fon karşılaştırılmalıdır');
             }
@@ -192,7 +206,18 @@ export const validateAnalysisRequest = [
         .isLength({ min: 2, max: 10 })
         .withMessage('Fon kodu 2-10 karakter uzunluğunda olmalıdır'),
     query('startDate')
-        .isIn(['last_5_years', 'last_3_years', 'last_1_year', 'year_start', 'last_6_months', 'last_3_months', 'last_1_month'])
+        .optional()
+        .isIn([
+            'last_1_day',
+            'last_1_week',
+            'last_1_month',
+            'last_3_months',
+            'last_6_months',
+            'last_1_year',
+            'last_3_years',
+            'last_5_years',
+            'year_start'
+        ])
         .withMessage('Geçersiz başlangıç tarihi'),
     query('initialInvestment')
         .isFloat({ min: 0 })

@@ -1,51 +1,24 @@
 import { Request, Response } from 'express';
-import { FundManagementCompany, FundYield } from '../models';
-import { Op, Order } from 'sequelize';
+import { FundManagementCompany, Fund, FundYield, FundType } from '../models';
+import { Op } from 'sequelize';
 import sequelize from '../config/database';
 
-const getOrderClause = (sort: string, order: 'ASC' | 'DESC'): Order => {
-    const orderMap: Record<string, Order> = {
-        'total_funds': [[sequelize.fn('COUNT', sequelize.col('funds.code')), order]],
-        'code': [[sequelize.col('FundManagementCompany.code'), order]],
-        'title': [[sequelize.col('FundManagementCompany.title'), order]]
+// Şirket verilerini formatla
+const formatCompanyResponse = (company: FundManagementCompany) => {
+    return {
+        code: company.code,
+        title: company.title,
+        logo: company.logoUrl,
+        total_funds: company.total_funds,
+        avg_yield_1d: company.avg_yield_1d,
+        avg_yield_1w: company.avg_yield_1w,
+        avg_yield_1m: company.avg_yield_1m,
+        avg_yield_6m: company.avg_yield_6m,
+        avg_yield_ytd: company.avg_yield_ytd,
+        avg_yield_1y: company.avg_yield_1y,
+        avg_yield_3y: company.avg_yield_3y,
+        avg_yield_5y: company.avg_yield_5y
     };
-
-    if (sort.startsWith('avg_yield_')) {
-        const period = sort.replace('avg_yield_', '');
-        return [[sequelize.fn('AVG', sequelize.col(`funds.yield_${period}`)), order]];
-    }
-
-    return orderMap[sort] || [[sequelize.col('FundManagementCompany.code'), 'ASC']];
-};
-
-const calculateStats = (funds: FundYield[]) => {
-    const periods = ['1m', '6m', 'ytd', '1y', '3y', '5y'] as const;
-    const stats: Record<string, any> = { total_funds: funds.length };
-
-    // Ortalama getirileri hesapla
-    periods.forEach(period => {
-        const validFunds = funds.filter(fund => fund[`yield_${period}`] !== null && fund[`yield_${period}`] !== undefined);
-        if (validFunds.length > 0) {
-            const sum = validFunds.reduce((acc, fund) => acc + Number(fund[`yield_${period}`]), 0);
-            stats[`avg_yield_${period}`] = Number((sum / validFunds.length).toFixed(2));
-        } else {
-            stats[`avg_yield_${period}`] = null;
-        }
-    });
-
-    // En iyi performans gösteren fonları bul
-    stats.best_performing_funds = funds
-        .filter(fund => fund.yield_1y != null)
-        .sort((a, b) => Number(b.yield_1y) - Number(a.yield_1y))
-        .slice(0, 5)
-        .map(fund => ({
-            code: fund.code,
-            title: fund.title,
-            type: fund.type,
-            ...Object.fromEntries(periods.map(period => [`yield_${period}`, fund[`yield_${period}`] !== null ? Number(fund[`yield_${period}`]) : null]))
-        }));
-
-    return stats;
 };
 
 // Tüm şirketleri listele
@@ -69,74 +42,51 @@ export const listCompanies = async (req: Request, res: Response): Promise<void> 
             ];
         }
 
-        // Fon sayısı filtresi için alt sorgu
-        const havingClause = minTotalFunds > 0 || maxTotalFunds < 999999
-            ? `HAVING COUNT(funds.code) >= ${minTotalFunds} AND COUNT(funds.code) <= ${maxTotalFunds}`
-            : '';
+        // Fon sayısı filtresi
+        if (minTotalFunds > 0) {
+            where.total_funds = {
+                [Op.gte]: minTotalFunds
+            };
+        }
+        if (maxTotalFunds < 999999) {
+            where.total_funds = {
+                ...where.total_funds,
+                [Op.lte]: maxTotalFunds
+            };
+        }
 
-        // Toplam kayıt sayısını al
-        const countQuery = `
-            SELECT COUNT(DISTINCT t.code) as total
-            FROM (
-                SELECT fmc.code
-                FROM fund_management_companies fmc
-                LEFT JOIN fund_yields funds ON fmc.code = funds.management_company_id
-                ${where[Op.or] ? `WHERE fmc.code LIKE '%${search}%' OR fmc.title LIKE '%${search}%'` : ''}
-                GROUP BY fmc.code
-                ${havingClause}
-            ) t`;
-
-        const [totalResult] = await sequelize.query(countQuery);
-        const totalCount = (totalResult as any)[0].total;
+        // Sıralama alanını belirle
+        const orderField = sort.startsWith('avg_yield_') ? sort :
+            ['code', 'title', 'total_funds'].includes(sort) ? sort : 'code';
 
         // Şirketleri getir
-        const companies = await FundManagementCompany.findAll({
+        const { count, rows } = await FundManagementCompany.findAndCountAll({
             where,
             attributes: [
                 'code',
                 'title',
                 'logo',
-                [sequelize.fn('COUNT', sequelize.col('funds.code')), 'total_funds'],
-                [sequelize.fn('AVG', sequelize.col('funds.yield_1m')), 'avg_yield_1m'],
-                [sequelize.fn('AVG', sequelize.col('funds.yield_6m')), 'avg_yield_6m'],
-                [sequelize.fn('AVG', sequelize.col('funds.yield_ytd')), 'avg_yield_ytd'],
-                [sequelize.fn('AVG', sequelize.col('funds.yield_1y')), 'avg_yield_1y'],
-                [sequelize.fn('AVG', sequelize.col('funds.yield_3y')), 'avg_yield_3y'],
-                [sequelize.fn('AVG', sequelize.col('funds.yield_5y')), 'avg_yield_5y']
+                'total_funds',
+                'avg_yield_1d',
+                'avg_yield_1w',
+                'avg_yield_1m',
+                'avg_yield_6m',
+                'avg_yield_ytd',
+                'avg_yield_1y',
+                'avg_yield_3y',
+                'avg_yield_5y'
             ],
-            include: [{
-                model: FundYield,
-                as: 'funds',
-                attributes: [],
-                required: false
-            }],
-            order: getOrderClause(sort, order),
-            group: ['FundManagementCompany.code', 'FundManagementCompany.title', 'FundManagementCompany.logo'],
-            having: havingClause ? sequelize.literal(havingClause.replace('HAVING ', '')) : undefined,
+            order: [[orderField, order]],
             limit,
-            offset,
-            subQuery: false
+            offset
         });
 
-        // İstatistikleri formatla
-        const data = companies.map(company => {
-            const result = {
-                code: company.code,
-                title: company.title,
-                logo: company.logoUrl,
-                total_funds: company.get('total_funds'),
-            } as any;
-
-            // Ortalama getirileri formatla
-            ['1m', '6m', 'ytd', '1y', '3y', '5y'].forEach(period => {
-                const avg = company.get(`avg_yield_${period}`);
-                result[`avg_yield_${period}`] = avg !== null ? Number(Number(avg).toFixed(2)) : null;
-            });
-
-            return result;
+        res.json({
+            total: count,
+            page,
+            limit,
+            data: rows.map(formatCompanyResponse)
         });
-
-        res.json({ total: totalCount, page, limit, data });
     } catch (error) {
         console.error('Şirket listesi alınırken hata:', error);
         res.status(500).json({ error: (error as Error).message });
@@ -144,28 +94,97 @@ export const listCompanies = async (req: Request, res: Response): Promise<void> 
 };
 
 // Tek bir şirketin detaylarını getir
-export const getCompanyDetails = async (req: Request<{ code: string }>, res: Response): Promise<void> => {
+export const getCompanyDetails = async (req: Request, res: Response): Promise<void> => {
     try {
-        const includeFunds = req.query.include_funds !== 'false';
-        const company = await FundManagementCompany.findByPk(req.params.code);
+        const { code } = req.params;
+        const includeFunds = req.query.include_funds === 'true';
+        const timestamp = Date.now(); // Cache'i engellemek için
 
+        // Şirketi bul
+        const company = await FundManagementCompany.findByPk(code);
         if (!company) {
             res.status(404).json({ error: 'Şirket bulunamadı' });
             return;
         }
 
         // Şirketin fonlarını getir
-        const funds = await FundYield.findAll({
-            where: { management_company_id: req.params.code },
-            order: [['yield_1m', 'DESC']]
-        });
+        const funds = includeFunds ? await Fund.findAll({
+            where: { management_company_id: code },
+            attributes: ['code', 'title', 'tefas'],
+            include: [
+                {
+                    model: FundYield,
+                    as: 'yield',
+                    attributes: ['yield_1d', 'yield_1w', 'yield_1m', 'yield_3m', 'yield_6m', 'yield_ytd', 'yield_1y', 'yield_3y', 'yield_5y']
+                },
+                {
+                    model: FundType,
+                    as: 'fund_type',
+                    attributes: ['short_name']
+                }
+            ],
+            order: [['code', 'ASC'], sequelize.literal(`RAND(${timestamp})`)],
+            limit: 20
+        }) : [];
+
+        // En iyi performans gösteren fonları getir
+        const bestPerformingFunds = includeFunds ? await Fund.findAll({
+            where: { management_company_id: code },
+            attributes: ['code', 'title', 'tefas'],
+            include: [
+                {
+                    model: FundYield,
+                    as: 'yield',
+                    attributes: ['yield_1d', 'yield_1w', 'yield_1m', 'yield_3m', 'yield_6m', 'yield_ytd', 'yield_1y', 'yield_3y', 'yield_5y'],
+                    where: {
+                        yield_1y: { [Op.not]: null }
+                    }
+                },
+                {
+                    model: FundType,
+                    as: 'fund_type',
+                    attributes: ['short_name']
+                }
+            ],
+            order: [[{ model: FundYield, as: 'yield' }, 'yield_1y', 'DESC']],
+            limit: 5
+        }) : [];
 
         res.json({
-            company,
-            stats: calculateStats(funds),
-            funds: includeFunds ? funds : undefined
+            ...formatCompanyResponse(company),
+            funds: funds.map(fund => ({
+                code: fund.code,
+                title: fund.title,
+                tefas: fund.tefas,
+                type: fund.fund_type.short_name,
+                yield_1d: fund.yield?.yield_1d,
+                yield_1w: fund.yield?.yield_1w,
+                yield_1m: fund.yield?.yield_1m,
+                yield_3m: fund.yield?.yield_3m,
+                yield_6m: fund.yield?.yield_6m,
+                yield_ytd: fund.yield?.yield_ytd,
+                yield_1y: fund.yield?.yield_1y,
+                yield_3y: fund.yield?.yield_3y,
+                yield_5y: fund.yield?.yield_5y
+            })),
+            best_performing_funds: bestPerformingFunds.map(fund => ({
+                code: fund.code,
+                title: fund.title,
+                tefas: fund.tefas,
+                type: fund.fund_type.short_name,
+                yield_1d: fund.yield?.yield_1d,
+                yield_1w: fund.yield?.yield_1w,
+                yield_1m: fund.yield?.yield_1m,
+                yield_3m: fund.yield?.yield_3m,
+                yield_6m: fund.yield?.yield_6m,
+                yield_ytd: fund.yield?.yield_ytd,
+                yield_1y: fund.yield?.yield_1y,
+                yield_3y: fund.yield?.yield_3y,
+                yield_5y: fund.yield?.yield_5y
+            }))
         });
     } catch (error) {
+        console.error('Şirket detayı alınırken hata:', error);
         res.status(500).json({ error: (error as Error).message });
     }
 }; 

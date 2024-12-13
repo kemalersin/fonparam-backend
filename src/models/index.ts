@@ -1,27 +1,58 @@
+import { Op, Sequelize } from 'sequelize';
 import { FundManagementCompany } from './FundManagementCompany';
 import { FundYield } from './FundYield';
 import FundHistoricalValue from './FundHistoricalValue';
+import Fund from './Fund';
+import FundType from './FundType';
+import sequelize from '../config/database';
 
 // İlişkileri tanımla
-FundManagementCompany.hasMany(FundYield, {
+FundManagementCompany.hasMany(Fund, {
     sourceKey: 'code',
     foreignKey: 'management_company_id',
     as: 'funds'
 });
 
-FundYield.belongsTo(FundManagementCompany, {
+Fund.belongsTo(FundManagementCompany, {
     targetKey: 'code',
     foreignKey: 'management_company_id',
     as: 'management_company'
 });
 
-FundYield.hasMany(FundHistoricalValue, {
-    sourceKey: 'code',
-    foreignKey: 'code',
-    as: 'historical_values'
+Fund.belongsTo(FundType, {
+    targetKey: 'type',
+    foreignKey: 'type',
+    as: 'fund_type'
 });
 
-FundHistoricalValue.belongsTo(FundYield, {
+Fund.hasOne(FundYield, {
+    sourceKey: 'code',
+    foreignKey: 'code',
+    as: 'yield'
+});
+
+FundYield.belongsTo(Fund, {
+    targetKey: 'code',
+    foreignKey: 'code',
+    as: 'fund'
+});
+
+Fund.hasOne(FundHistoricalValue, {
+    sourceKey: 'code',
+    foreignKey: 'code',
+    as: 'last_historical_value',
+    scope: {
+        date: {
+            [Op.eq]: sequelize.literal(`(
+                SELECT MAX(date) 
+                FROM fund_historical_values AS hv 
+                WHERE hv.code = Fund.code
+            )`)
+        }
+    }
+});
+
+FundHistoricalValue.belongsTo(Fund, {
     targetKey: 'code',
     foreignKey: 'code',
     as: 'fund'
@@ -29,6 +60,8 @@ FundHistoricalValue.belongsTo(FundYield, {
 
 export {
     FundManagementCompany,
+    Fund,
+    FundType,
     FundYield,
     FundHistoricalValue
 }; 

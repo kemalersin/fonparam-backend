@@ -1,18 +1,59 @@
 import { Request } from 'express';
 import { ParsedQs } from 'qs';
 
+export enum FundTypeEnum {
+    ALTIN = 'altin',
+    BORCLANMA_ARACLARI = 'borclanma_araclari',
+    DEGISKEN = 'degisken',
+    FON_SEPETI = 'fon_sepeti',
+    GUMUS = 'gumus',
+    HISSE_SENEDI = 'hisse_senedi',
+    HISSE_SENEDI_YOGUN = 'hisse_senedi_yogun',
+    KARMA = 'karma',
+    KATILIM = 'katilim',
+    KIYMETLI_MADENLER = 'kiymetli_madenler',
+    PARA_PIYASASI = 'para_piyasasi',
+    SERBEST = 'serbest',
+    YABANCI = 'yabanci',
+    DIGER = 'diger'
+}
+
 export interface FundManagementCompany {
     code: string;
     title: string;
     logo?: string;
+    total_funds?: number;
+    avg_yield_1d?: number;
+    avg_yield_1w?: number;
+    avg_yield_1m?: number;
+    avg_yield_6m?: number;
+    avg_yield_ytd?: number;
+    avg_yield_1y?: number;
+    avg_yield_3y?: number;
+    avg_yield_5y?: number;
+}
+
+export interface Fund {
+    code: string;
+    management_company_id: string;
+    title: string;
+    type: FundTypeEnum;
+    tefas?: boolean;
+    has_historical_data: boolean;
+    historical_data_check_date?: Date;
+}
+
+export interface FundType {
+    type: string;
+    short_name: string;
+    long_name: string;
+    group_name: string;
 }
 
 export interface FundYield {
     code: string;
-    management_company_id?: string;
-    title: string;
-    type?: string;
-    tefas?: boolean;
+    yield_1d?: number;
+    yield_1w?: number;
     yield_1m?: number;
     yield_3m?: number;
     yield_6m?: number;
@@ -20,13 +61,17 @@ export interface FundYield {
     yield_1y?: number;
     yield_3y?: number;
     yield_5y?: number;
-    management_company?: FundManagementCompany;
 }
 
 export interface FundHistoricalValue {
     code: string;
     date: Date;
-    value?: number;
+    value: number;
+    aum?: number;
+    shares_active?: number;
+    yield?: number;
+    cumulative_cashflow?: number;
+    investor_count?: number;
 }
 
 export interface PaginatedResponse<T> {
