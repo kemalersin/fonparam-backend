@@ -123,9 +123,14 @@ export const getCompanyDetails = async (req: Request, res: Response): Promise<vo
                     attributes: ['short_name']
                 }
             ],
-            order: [['code', 'ASC'], sequelize.literal(`RAND(${timestamp})`)],
-            limit: 20
-        }) : [];
+            order: sequelize.literal(`RAND(${timestamp})`),
+            limit: 20,
+            raw: true,
+            nest: true
+        }).then(randomFunds => 
+            // Rastgele seçilen fonları kod sırasına göre sırala
+            randomFunds.sort((a, b) => a.code.localeCompare(b.code))
+        ) : [];
 
         // En iyi performans gösteren fonları getir
         const bestPerformingFunds = includeFunds ? await Fund.findAll({
