@@ -40,32 +40,50 @@ export const buildFundFilters = (query: FundFilters): BaseFilters => {
     const { limit, offset } = calculatePagination(query.page, query.limit);
 
     // Temel filtreler
+    const filters: any[] = [];
+
     if (query.type) {
-        where[Op.or] = [
-            { '$fund_type.type$': query.type },
-            { '$fund_type.short_name$': query.type },
-            { '$fund_type.long_name$': query.type },
-            { '$fund_type.group_name$': query.type }
-        ];
+        filters.push({
+            [Op.or]: [
+                { '$fund_type.type$': query.type },
+                { '$fund_type.short_name$': query.type },
+                { '$fund_type.long_name$': query.type },
+                { '$fund_type.group_name$': query.type }
+            ]
+        });
     }
-    if (query.management_company) where['$fund.management_company.code$'] = query.management_company;
-    if (query.tefas !== undefined) where['$fund.tefas$'] = query.tefas === 'true';
+
+    if (query.management_company) {
+        filters.push({ '$fund.management_company.code$': query.management_company });
+    }
+
+    if (query.tefas !== undefined) {
+        filters.push({ '$fund.tefas$': query.tefas === 'true' });
+    }
+
     if (query.code) {
         const codes = query.code.split(',').map(code => code.trim());
-        where.code = codes.length === 1 
-            ? { [Op.like]: `%${codes[0]}%` }
-            : { [Op.in]: codes };
+        filters.push({
+            code: codes.length === 1 
+                ? { [Op.like]: `%${codes[0]}%` }
+                : { [Op.in]: codes }
+        });
     }
 
     // Getiri filtreleri
     ['yield_1d', 'yield_1w', 'yield_1m', 'yield_3m', 'yield_6m', 'yield_ytd', 'yield_1y', 'yield_3y', 'yield_5y'].forEach(field => {
-        if (query[field]) where[field] = query[field];
+        if (query[field]) {
+            filters.push({ [field]: query[field] });
+        }
     });
 
     // Arama filtresi
     if (query.search) {
-        where = { ...where, ...buildSearchFilter(query.search) };
+        filters.push(buildSearchFilter(query.search));
     }
+
+    // Tüm filtreleri AND ile birleştir
+    where = filters.length > 0 ? { [Op.and]: filters } : {};
 
     return { where, limit, offset };
 };
