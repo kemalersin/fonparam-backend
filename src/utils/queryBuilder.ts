@@ -48,8 +48,8 @@ export const buildFundFilters = (query: FundFilters): BaseFilters => {
             { '$fund_type.group_name$': query.type }
         ];
     }
-    if (query.management_company) where['$management_company.code$'] = query.management_company;
-    if (query.tefas !== undefined) where['$tefas$'] = query.tefas === 'true';
+    if (query.management_company) where['$fund.management_company.code$'] = query.management_company;
+    if (query.tefas !== undefined) where['$fund.tefas$'] = query.tefas === 'true';
     if (query.code) {
         const codes = query.code.split(',').map(code => code.trim());
         where.code = codes.length === 1 

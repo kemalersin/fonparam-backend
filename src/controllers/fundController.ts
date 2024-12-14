@@ -21,7 +21,7 @@ const INCLUDES = {
     YIELD: {
         model: FundYield,
         as: 'yield',
-        required: true
+        required: false
     },
     LAST_HISTORICAL_VALUE: {
         model: FundHistoricalValue,
