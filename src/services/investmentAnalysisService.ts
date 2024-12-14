@@ -125,7 +125,7 @@ class InvestmentAnalysisService {
             }
 
             // Bulunan ilk kayıttan itibaren tüm verileri getir
-            return await FundHistoricalValue.findAll({
+            const records = await FundHistoricalValue.findAll({
                 where: {
                     code,
                     date: {
@@ -135,6 +135,32 @@ class InvestmentAnalysisService {
                 },
                 order: [['date', 'ASC']]
             });
+
+            // Bugünün verisi yoksa ve son kayıt varsa, son kaydı bugünün tarihiyle ekle
+            if (records.length > 0) {
+                const lastRecord = records[records.length - 1];
+                const lastRecordDate = new Date(lastRecord.date);
+                const today = new Date();
+                
+                // Tarihleri yerel saat dilimine göre ayarla
+                lastRecordDate.setHours(0, 0, 0, 0);
+                today.setHours(0, 0, 0, 0);
+
+                if (lastRecordDate.getTime() < today.getTime()) {
+                    // Bugünün tarihini YYYY-MM-DD formatında al
+                    const todayStr = today.getFullYear() + '-' + 
+                        String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+                        String(today.getDate()).padStart(2, '0');
+
+                    const todayRecord = {
+                        ...lastRecord.get({ plain: true }),
+                        date: todayStr
+                    };
+                    records.push(todayRecord as FundHistoricalValue);
+                }
+            }
+
+            return records;
         }
 
         // Aylık veri için her ayın hedef güne en yakın verisini al

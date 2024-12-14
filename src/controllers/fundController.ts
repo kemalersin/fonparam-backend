@@ -91,10 +91,10 @@ const formatFundResponse = (fund: Fund) => {
     };
 };
 
-const formatPaginatedResponse = (funds: Fund[], total?: number, page?: number, limit?: number) => {
+const formatPaginatedResponse = (funds: Fund[], total: number, page: number, limit?: number) => {
     const data = funds.map(fund => formatFundResponse(fund));
 
-    return total ? {
+    return limit ? {
         total,
         page,
         limit,
