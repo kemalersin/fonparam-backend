@@ -11,6 +11,7 @@ export class FundManagementCompany extends Model {
     public avg_yield_1d!: number | null;
     public avg_yield_1w!: number | null;
     public avg_yield_1m!: number | null;
+    public avg_yield_3m!: number | null;
     public avg_yield_6m!: number | null;
     public avg_yield_ytd!: number | null;
     public avg_yield_1y!: number | null;
@@ -75,6 +76,14 @@ FundManagementCompany.init({
         allowNull: true,
         get() {
             const value = this.getDataValue('avg_yield_1m');
+            return value === null ? null : Number(value);
+        }
+    },
+    avg_yield_3m: {
+        type: DataTypes.DECIMAL(10, 4),
+        allowNull: true,
+        get() {
+            const value = this.getDataValue('avg_yield_3m');
             return value === null ? null : Number(value);
         }
     },

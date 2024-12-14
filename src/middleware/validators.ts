@@ -110,6 +110,7 @@ export const listCompaniesValidation: ValidationChain[] = [
         'avg_yield_1d',
         'avg_yield_1w',
         'avg_yield_1m',
+        'avg_yield_3m',
         'avg_yield_6m',
         'avg_yield_ytd',
         'avg_yield_1y',

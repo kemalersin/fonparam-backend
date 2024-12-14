@@ -26,6 +26,7 @@ export interface FundManagementCompany {
     avg_yield_1d?: number;
     avg_yield_1w?: number;
     avg_yield_1m?: number;
+    avg_yield_3m?: number;
     avg_yield_6m?: number;
     avg_yield_ytd?: number;
     avg_yield_1y?: number;
