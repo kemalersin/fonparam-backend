@@ -106,7 +106,7 @@ const formatPaginatedResponse = (funds: Fund[], total: number, page: number, lim
 export const listFunds = async (req: TypedRequest<FundFilters>, res: Response): Promise<void> => {
     try {
         const filters = buildFundFilters(req.query);
-        const sort = req.query.sort || 'title';
+        const sort = req.query.sort || 'code';
         const order = (req.query.order || 'ASC').toUpperCase() as 'ASC' | 'DESC';
 
         // Sıralama alanını kontrol et
