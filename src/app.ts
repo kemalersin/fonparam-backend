@@ -6,6 +6,8 @@ import swaggerUi from 'swagger-ui-express';
 import swaggerSpecs from './config/swagger';
 import fundRoutes from './routes/fundRoutes';
 import companyRoutes from './routes/companyRoutes';
+import statisticsRoutes from './routes/statisticsRoutes';
+import fundTypeRoutes from './routes/fundTypeRoutes';
 
 dotenv.config();
 
@@ -32,6 +34,8 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs, {
 // Routes
 app.use('/api/funds', fundRoutes);
 app.use('/api/companies', companyRoutes);
+app.use('/api/statistics', statisticsRoutes);
+app.use('/api/fund-types', fundTypeRoutes);
 
 // Error handling
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

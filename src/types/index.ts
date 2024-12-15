@@ -51,6 +51,21 @@ export interface FundType {
     group_name: string;
 }
 
+export interface FundTypeYields {
+    type: string;
+    yield_1d?: number;
+    yield_1w?: number;
+    yield_1m?: number;
+    yield_3m?: number;
+    yield_6m?: number;
+    yield_ytd?: number;
+    yield_1y?: number;
+    yield_3y?: number;
+    yield_5y?: number;
+    total_funds: number;
+    total_aum?: number;
+}
+
 export interface FundYield {
     code: string;
     yield_1d?: number;

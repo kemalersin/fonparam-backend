@@ -1,8 +1,9 @@
 import { Model, DataTypes } from 'sequelize';
 import sequelize from '../config/database';
+import { FundTypeEnum } from '../types';
 
 class FundType extends Model {
-    declare type: string;
+    declare type: FundTypeEnum;
     declare short_name: string;
     declare long_name: string;
     declare group_name: string;
@@ -10,7 +11,7 @@ class FundType extends Model {
 
 FundType.init({
     type: {
-        type: DataTypes.STRING(20),
+        type: DataTypes.ENUM(...Object.values(FundTypeEnum)),
         primaryKey: true,
         allowNull: false
     },

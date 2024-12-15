@@ -1,4 +1,5 @@
 import swaggerJsdoc from 'swagger-jsdoc';
+import { FundTypeEnum } from '../types';
 
 const options: swaggerJsdoc.Options = {
     definition: {
@@ -34,13 +35,13 @@ API'nin tüm endpointleri için rate limiting uygulanmaktadır:
 
 Performansı artırmak için önbellek kullanılmaktadır:
 
-- Fon listesi: 5 dakika
-- Fon detayı: 10 dakika
+- Fon listesi: 30 dakika
+- Fon detayı: 30 dakika
 - Fon analizi: 30 dakika
 - Geçmiş veriler: 30 dakika
-- Karşılaştırma: 5 dakika
-- Şirket listesi: 5 dakika
-- Şirket detayı: 10 dakika
+- Karşılaştırma: 30 dakika
+- Şirket listesi: 30 dakika
+- Şirket detayı: 30 dakika
             `,
             contact: {
                 name: 'API Desteği',
@@ -64,12 +65,20 @@ Performansı artırmak için önbellek kullanılmaktadır:
         ],
         tags: [
             {
+                name: 'Fon Tipleri',
+                description: 'Fon tipleri ile ilgili operasyonlar'
+            },
+            {
                 name: 'Fonlar',
                 description: 'Yatırım fonları ile ilgili tüm operasyonlar'
             },
             {
                 name: 'Portföy Yönetim Şirketleri',
                 description: 'Portföy yönetim şirketleri ile ilgili operasyonlar'
+            },
+            {
+                name: 'İstatistikler',
+                description: 'Günlük istatistikler ile ilgili operasyonlar'
             }
         ],
         paths: {
@@ -994,6 +1003,488 @@ Performansı artırmak için önbellek kullanılmaktadır:
                     }
                 }
             },
+            '/statistics': {
+                get: {
+                    tags: ['İstatistikler'],
+                    summary: 'Günlük istatistikleri listeler',
+                    description: 'Günlük bazda toplam fon, şirket, yatırımcı sayısı ve ortalama getiri istatistiklerini listeler',
+                    parameters: [
+                        {
+                            name: 'start_date',
+                            in: 'query',
+                            description: 'Başlangıç tarihi (YYYY-MM-DD)',
+                            schema: {
+                                type: 'string',
+                                format: 'date'
+                            }
+                        },
+                        {
+                            name: 'end_date',
+                            in: 'query',
+                            description: 'Bitiş tarihi (YYYY-MM-DD)',
+                            schema: {
+                                type: 'string',
+                                format: 'date'
+                            }
+                        },
+                        {
+                            name: 'sort',
+                            in: 'query',
+                            description: 'Sıralama alanı',
+                            schema: {
+                                type: 'string',
+                                enum: [
+                                    'date',
+                                    'total_funds',
+                                    'total_companies',
+                                    'total_investors',
+                                    'total_aum',
+                                    'avg_profit',
+                                    'avg_loss'
+                                ],
+                                default: 'date'
+                            }
+                        },
+                        {
+                            name: 'order',
+                            in: 'query',
+                            description: 'Sıralama yönü',
+                            schema: {
+                                type: 'string',
+                                enum: ['ASC', 'DESC'],
+                                default: 'DESC'
+                            }
+                        },
+                        {
+                            name: 'page',
+                            in: 'query',
+                            description: 'Sayfa numarası',
+                            schema: {
+                                type: 'integer',
+                                minimum: 1,
+                                default: 1
+                            }
+                        },
+                        {
+                            name: 'limit',
+                            in: 'query',
+                            description: 'Sayfa başına kayıt sayısı',
+                            schema: {
+                                type: 'integer',
+                                minimum: 1,
+                                maximum: 100,
+                                default: 20
+                            }
+                        }
+                    ],
+                    responses: {
+                        '200': {
+                            description: 'Başarılı',
+                            content: {
+                                'application/json': {
+                                    schema: {
+                                        type: 'object',
+                                        properties: {
+                                            total: {
+                                                type: 'integer',
+                                                description: 'Toplam kayıt sayısı'
+                                            },
+                                            page: {
+                                                type: 'integer',
+                                                description: 'Mevcut sayfa'
+                                            },
+                                            limit: {
+                                                type: 'integer',
+                                                description: 'Sayfa başına kayıt sayısı'
+                                            },
+                                            data: {
+                                                type: 'array',
+                                                items: {
+                                                    $ref: '#/components/schemas/DailyStatistics'
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        '500': {
+                            $ref: '#/components/responses/ServerError'
+                        }
+                    }
+                }
+            },
+            '/statistics/latest': {
+                get: {
+                    tags: ['İstatistikler'],
+                    summary: 'Son istatistikleri getirir',
+                    description: 'En son güne ait istatistikleri getirir',
+                    responses: {
+                        '200': {
+                            description: 'Başarılı',
+                            content: {
+                                'application/json': {
+                                    schema: {
+                                        $ref: '#/components/schemas/DailyStatistics'
+                                    }
+                                }
+                            }
+                        },
+                        '404': {
+                            $ref: '#/components/responses/NotFound'
+                        },
+                        '500': {
+                            $ref: '#/components/responses/ServerError'
+                        }
+                    }
+                }
+            },
+            '/statistics/{date}': {
+                get: {
+                    tags: ['İstatistikler'],
+                    summary: 'Belirli bir günün istatistiklerini getirir',
+                    description: 'Belirtilen tarihe ait istatistikleri getirir',
+                    parameters: [
+                        {
+                            name: 'date',
+                            in: 'path',
+                            required: true,
+                            description: 'İstatistik tarihi (YYYY-MM-DD)',
+                            schema: {
+                                type: 'string',
+                                format: 'date'
+                            }
+                        }
+                    ],
+                    responses: {
+                        '200': {
+                            description: 'Başarılı',
+                            content: {
+                                'application/json': {
+                                    schema: {
+                                        $ref: '#/components/schemas/DailyStatistics'
+                                    }
+                                }
+                            }
+                        },
+                        '404': {
+                            $ref: '#/components/responses/NotFound'
+                        },
+                        '500': {
+                            $ref: '#/components/responses/ServerError'
+                        }
+                    }
+                }
+            },
+            '/fund-types': {
+                get: {
+                    tags: ['Fon Tipleri'],
+                    summary: 'Fon tiplerini listeler',
+                    description: 'Tüm fon tiplerini ve detaylarını listeler',
+                    parameters: [
+                        {
+                            name: 'sort',
+                            in: 'query',
+                            description: 'Sıralama alanı',
+                            schema: {
+                                type: 'string',
+                                enum: [
+                                    'type',
+                                    'short_name',
+                                    'long_name',
+                                    'group_name'
+                                ],
+                                default: 'type'
+                            }
+                        },
+                        {
+                            name: 'order',
+                            in: 'query',
+                            description: 'Sıralama yönü',
+                            schema: {
+                                type: 'string',
+                                enum: ['ASC', 'DESC'],
+                                default: 'ASC'
+                            }
+                        },
+                        {
+                            name: 'min_total_funds',
+                            in: 'query',
+                            description: 'Minimum fon sayısı',
+                            schema: {
+                                type: 'integer',
+                                minimum: 0
+                            },
+                            example: 50
+                        },
+                        {
+                            name: 'max_total_funds',
+                            in: 'query',
+                            description: 'Maksimum fon sayısı',
+                            schema: {
+                                type: 'integer',
+                                minimum: 0
+                            },
+                            example: 150
+                        }
+                    ],
+                    responses: {
+                        '200': {
+                            description: 'Başarılı',
+                            content: {
+                                'application/json': {
+                                    schema: {
+                                        type: 'array',
+                                        items: {
+                                            type: 'object',
+                                            properties: {
+                                                type: {
+                                                    type: 'string',
+                                                    enum: Object.values(FundTypeEnum),
+                                                    description: 'Fon tipi kodu',
+                                                    example: 'hisse_senedi'
+                                                },
+                                                short_name: {
+                                                    type: 'string',
+                                                    description: 'Fon tipi kısa adı',
+                                                    example: 'Hisse Senedi Fonu'
+                                                },
+                                                long_name: {
+                                                    type: 'string',
+                                                    description: 'Fon tipi uzun adı',
+                                                    example: 'Hisse Senedi Şemsiye Fonu'
+                                                },
+                                                group_name: {
+                                                    type: 'string',
+                                                    description: 'Fon grubu adı',
+                                                    example: 'Hisse Senedi Fonları'
+                                                },
+                                                yield_1d: {
+                                                    type: 'number',
+                                                    format: 'float',
+                                                    description: '1 günlük getiri (%)',
+                                                    example: 0.197,
+                                                    nullable: true
+                                                },
+                                                yield_1w: {
+                                                    type: 'number',
+                                                    format: 'float',
+                                                    description: '1 haftalık getiri (%)',
+                                                    example: 1.183,
+                                                    nullable: true
+                                                },
+                                                yield_1m: {
+                                                    type: 'number',
+                                                    format: 'float',
+                                                    description: '1 aylık getiri (%)',
+                                                    example: 8.685,
+                                                    nullable: true
+                                                },
+                                                yield_3m: {
+                                                    type: 'number',
+                                                    format: 'float',
+                                                    description: '3 aylık getiri (%)',
+                                                    example: 8.124,
+                                                    nullable: true
+                                                },
+                                                yield_6m: {
+                                                    type: 'number',
+                                                    format: 'float',
+                                                    description: '6 aylık getiri (%)',
+                                                    example: 2.9334,
+                                                    nullable: true
+                                                },
+                                                yield_ytd: {
+                                                    type: 'number',
+                                                    format: 'float',
+                                                    description: 'Yıl başından bugüne getiri (%)',
+                                                    example: 46.0666,
+                                                    nullable: true
+                                                },
+                                                yield_1y: {
+                                                    type: 'number',
+                                                    format: 'float',
+                                                    description: '1 yıllık getiri (%)',
+                                                    example: 45.2268,
+                                                    nullable: true
+                                                },
+                                                yield_3y: {
+                                                    type: 'number',
+                                                    format: 'float',
+                                                    description: '3 yıllık getiri (%)',
+                                                    example: 509.718,
+                                                    nullable: true
+                                                },
+                                                yield_5y: {
+                                                    type: 'number',
+                                                    format: 'float',
+                                                    description: '5 yıllık getiri (%)',
+                                                    example: 1166.1549,
+                                                    nullable: true
+                                                },
+                                                total_funds: {
+                                                    type: 'integer',
+                                                    description: 'Toplam fon sayısı',
+                                                    example: 130
+                                                },
+                                                total_aum: {
+                                                    type: 'number',
+                                                    format: 'float',
+                                                    description: 'Toplam portföy büyüklüğü',
+                                                    example: 179311081590,
+                                                    nullable: true
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        '500': {
+                            $ref: '#/components/responses/ServerError'
+                        }
+                    }
+                }
+            },
+            '/fund-types/{type}': {
+                get: {
+                    tags: ['Fon Tipleri'],
+                    summary: 'Belirli bir fon tipinin detaylarını getirir',
+                    description: 'Belirtilen fon tipinin detaylarını getirir',
+                    parameters: [
+                        {
+                            name: 'type',
+                            in: 'path',
+                            required: true,
+                            description: 'Fon tipi kodu',
+                            schema: {
+                                type: 'string',
+                                enum: Object.values(FundTypeEnum)
+                            },
+                            example: 'hisse_senedi'
+                        }
+                    ],
+                    responses: {
+                        '200': {
+                            description: 'Başarılı',
+                            content: {
+                                'application/json': {
+                                    schema: {
+                                        type: 'object',
+                                        properties: {
+                                            type: {
+                                                type: 'string',
+                                                enum: Object.values(FundTypeEnum),
+                                                description: 'Fon tipi kodu',
+                                                example: 'hisse_senedi'
+                                            },
+                                            short_name: {
+                                                type: 'string',
+                                                description: 'Fon tipi kısa adı',
+                                                example: 'Hisse Senedi Fonu'
+                                            },
+                                            long_name: {
+                                                type: 'string',
+                                                description: 'Fon tipi uzun adı',
+                                                example: 'Hisse Senedi Şemsiye Fonu'
+                                            },
+                                            group_name: {
+                                                type: 'string',
+                                                description: 'Fon grubu adı',
+                                                example: 'Hisse Senedi Fonları'
+                                            },
+                                            yield_1d: {
+                                                type: 'number',
+                                                format: 'float',
+                                                description: '1 günlük getiri (%)',
+                                                example: 0.197,
+                                                nullable: true
+                                            },
+                                            yield_1w: {
+                                                type: 'number',
+                                                format: 'float',
+                                                description: '1 haftalık getiri (%)',
+                                                example: 1.183,
+                                                nullable: true
+                                            },
+                                            yield_1m: {
+                                                type: 'number',
+                                                format: 'float',
+                                                description: '1 aylık getiri (%)',
+                                                example: 8.685,
+                                                nullable: true
+                                            },
+                                            yield_3m: {
+                                                type: 'number',
+                                                format: 'float',
+                                                description: '3 aylık getiri (%)',
+                                                example: 8.124,
+                                                nullable: true
+                                            },
+                                            yield_6m: {
+                                                type: 'number',
+                                                format: 'float',
+                                                description: '6 aylık getiri (%)',
+                                                example: 2.9334,
+                                                nullable: true
+                                            },
+                                            yield_ytd: {
+                                                type: 'number',
+                                                format: 'float',
+                                                description: 'Yıl başından bugüne getiri (%)',
+                                                example: 46.0666,
+                                                nullable: true
+                                            },
+                                            yield_1y: {
+                                                type: 'number',
+                                                format: 'float',
+                                                description: '1 yıllık getiri (%)',
+                                                example: 45.2268,
+                                                nullable: true
+                                            },
+                                            yield_3y: {
+                                                type: 'number',
+                                                format: 'float',
+                                                description: '3 yıllık getiri (%)',
+                                                example: 509.718,
+                                                nullable: true
+                                            },
+                                            yield_5y: {
+                                                type: 'number',
+                                                format: 'float',
+                                                description: '5 yıllık getiri (%)',
+                                                example: 1166.1549,
+                                                nullable: true
+                                            },
+                                            total_funds: {
+                                                type: 'integer',
+                                                description: 'Toplam fon sayısı',
+                                                example: 130
+                                            },
+                                            total_aum: {
+                                                type: 'number',
+                                                format: 'float',
+                                                description: 'Toplam portföy büyüklüğü',
+                                                example: 179311081590,
+                                                nullable: true
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        '400': {
+                            $ref: '#/components/responses/ValidationError'
+                        },
+                        '404': {
+                            $ref: '#/components/responses/NotFound'
+                        },
+                        '500': {
+                            $ref: '#/components/responses/ServerError'
+                        }
+                    }
+                }
+            }
         },
         components: {
             schemas: {
@@ -1063,255 +1554,297 @@ Performansı artırmak için önbellek kullanılmaktadır:
                             type: 'number',
                             format: 'float',
                             description: '1 günlük ortalama getiri',
-                            example: 0.45
+                            example: 0.45,
+                            nullable: true
                         },
                         avg_yield_1w: {
                             type: 'number',
                             format: 'float',
                             description: '1 haftalık ortalama getiri',
-                            example: 1.23
+                            example: 1.23,
+                            nullable: true
                         },
                         avg_yield_1m: {
                             type: 'number',
                             format: 'float',
                             description: '1 aylık ortalama getiri',
-                            example: 2.45
+                            example: 2.45,
+                            nullable: true
+                        },
+                        avg_yield_3m: {
+                            type: 'number',
+                            format: 'float',
+                            description: '3 aylık ortalama getiri',
+                            example: 5.67,
+                            nullable: true
                         },
                         avg_yield_6m: {
                             type: 'number',
                             format: 'float',
                             description: '6 aylık ortalama getiri',
-                            example: 15.67
+                            example: 15.67,
+                            nullable: true
                         },
                         avg_yield_ytd: {
                             type: 'number',
                             format: 'float',
                             description: 'Yıl başından bugüne ortalama getiri',
-                            example: 12.34
+                            example: 12.34,
+                            nullable: true
                         },
                         avg_yield_1y: {
                             type: 'number',
                             format: 'float',
                             description: '1 yıllık ortalama getiri',
-                            example: 28.91
+                            example: 28.91,
+                            nullable: true
                         },
                         avg_yield_3y: {
                             type: 'number',
                             format: 'float',
                             description: '3 yıllık ortalama getiri',
-                            example: 95.67
+                            example: 95.67,
+                            nullable: true
                         },
                         avg_yield_5y: {
                             type: 'number',
                             format: 'float',
                             description: '5 yıllık ortalama getiri',
-                            example: 156.78
+                            example: 156.78,
+                            nullable: true
                         }
                     }
                 },
-                FundYield: {
+                Fund: {
                     type: 'object',
-                    required: ['code', 'title', 'type'],
+                    required: ['code', 'management_company_id', 'title', 'type', 'has_historical_data'],
                     properties: {
                         code: {
                             type: 'string',
                             description: 'Fon kodu',
                             example: 'AAK'
                         },
+                        management_company_id: {
+                            type: 'string',
+                            description: 'Portföy yönetim şirketi kodu',
+                            example: 'APY'
+                        },
                         title: {
                             type: 'string',
                             description: 'Fon adı',
-                            example: 'ATA PORTFÖY ÇOKLU VARLIK DEĞİŞKEN FONU'
+                            example: 'ATA PORTFÖY BİRİNCİ HİSSE SENEDİ FONU'
+                        },
+                        type: {
+                            type: 'string',
+                            enum: Object.values(FundTypeEnum),
+                            description: 'Fon tipi',
+                            example: 'hisse_senedi'
                         },
                         tefas: {
                             type: 'boolean',
                             description: 'TEFAS\'ta işlem görüyor mu?',
+                            example: true,
+                            nullable: true
+                        },
+                        has_historical_data: {
+                            type: 'boolean',
+                            description: 'Geçmiş verisi var mı?',
                             example: true
+                        },
+                        historical_data_check_date: {
+                            type: 'string',
+                            format: 'date-time',
+                            description: 'Geçmiş veri kontrol tarihi',
+                            example: '2023-12-14T10:00:00.000Z',
+                            nullable: true
+                        }
+                    }
+                },
+                FundType: {
+                    type: 'object',
+                    required: ['type', 'short_name', 'long_name', 'group_name'],
+                    properties: {
+                        type: {
+                            type: 'string',
+                            enum: Object.values(FundTypeEnum),
+                            description: 'Fon tipi kodu',
+                            example: 'hisse_senedi'
+                        },
+                        short_name: {
+                            type: 'string',
+                            description: 'Fon tipi kısa adı',
+                            example: 'Hisse Senedi Fonu'
+                        },
+                        long_name: {
+                            type: 'string',
+                            description: 'Fon tipi uzun adı',
+                            example: 'Hisse Senedi Şemsiye Fonu'
+                        },
+                        group_name: {
+                            type: 'string',
+                            description: 'Fon grubu adı',
+                            example: 'Hisse Senedi Fonları'
+                        }
+                    }
+                },
+                FundTypeYields: {
+                    type: 'object',
+                    required: ['type', 'total_funds'],
+                    properties: {
+                        type: {
+                            type: 'string',
+                            enum: Object.values(FundTypeEnum),
+                            description: 'Fon tipi',
+                            example: 'hisse_senedi'
                         },
                         yield_1d: {
                             type: 'number',
                             format: 'float',
                             description: '1 günlük getiri (%)',
-                            example: '0.0929'
+                            example: 0.197,
+                            nullable: true
                         },
                         yield_1w: {
                             type: 'number',
                             format: 'float',
                             description: '1 haftalık getiri (%)',
-                            example: '1.9517'
+                            example: 1.183,
+                            nullable: true
                         },
                         yield_1m: {
                             type: 'number',
                             format: 'float',
                             description: '1 aylık getiri (%)',
-                            example: '7.1268'
+                            example: 8.685,
+                            nullable: true
                         },
                         yield_3m: {
                             type: 'number',
                             format: 'float',
                             description: '3 aylık getiri (%)',
-                            example: '8.6255'
+                            example: 8.124,
+                            nullable: true
                         },
                         yield_6m: {
                             type: 'number',
                             format: 'float',
                             description: '6 aylık getiri (%)',
-                            example: '12.4757'
+                            example: 2.9334,
+                            nullable: true
                         },
                         yield_ytd: {
                             type: 'number',
                             format: 'float',
-                            description: 'Yıl başından itibaren getiri (%)',
-                            example: '49.6378'
+                            description: 'Yıl başından bugüne getiri (%)',
+                            example: 46.0666,
+                            nullable: true
                         },
                         yield_1y: {
                             type: 'number',
                             format: 'float',
                             description: '1 yıllık getiri (%)',
-                            example: '52.4460'
+                            example: 45.2268,
+                            nullable: true
                         },
                         yield_3y: {
                             type: 'number',
                             format: 'float',
                             description: '3 yıllık getiri (%)',
-                            example: '309.1558'
+                            example: 509.718,
+                            nullable: true
                         },
                         yield_5y: {
                             type: 'number',
                             format: 'float',
                             description: '5 yıllık getiri (%)',
-                            example: '600.6521'
+                            example: 1166.1549,
+                            nullable: true
                         },
-                        type: {
+                        total_funds: {
+                            type: 'integer',
+                            description: 'Toplam fon sayısı',
+                            example: 130
+                        },
+                        total_aum: {
+                            type: 'number',
+                            format: 'float',
+                            description: 'Toplam portföy büyüklüğü',
+                            example: 179311081590,
+                            nullable: true
+                        }
+                    }
+                },
+                FundYield: {
+                    type: 'object',
+                    required: ['code'],
+                    properties: {
+                        code: {
                             type: 'string',
-                            description: 'Fon tipi',
-                            example: 'Değişken Fon',
-                            enum: [
-                                'Altın Fon',
-                                'Borçlanma Araçları Fonu',
-                                'Değişken Fon',
-                                'Fon Sepeti Fonu',
-                                'Gümüş Fon',
-                                'Hisse Senedi Fonu',
-                                'Hisse Senedi Yoğun Fon',
-                                'Karma Fon',
-                                'Katılım Fonu',
-                                'Kıymetli Madenler Fonu',
-                                'Para Piyasası Fonu',
-                                'Serbest Fon',
-                                'Yabancı Fon',
-                                'Diğer Fon'
-                            ]
+                            description: 'Fon kodu',
+                            example: 'AAK'
                         },
-                        management_company: {
-                            type: 'object',
-                            description: 'Portföy yönetim şirketi bilgileri',
-                            properties: {
-                                code: {
-                                    type: 'string',
-                                    description: 'Şirket kodu',
-                                    example: 'APY'
-                                },
-                                title: {
-                                    type: 'string',
-                                    description: 'Şirket adı',
-                                    example: 'ATA PORTFÖY YÖNETİMİ A.Ş.'
-                                },
-                                logo: {
-                                    type: 'string',
-                                    description: 'Şirket logo dosya adı',
-                                    example: 'ata_portfoy_icon.png'
-                                }
-                            }
+                        yield_1d: {
+                            type: 'number',
+                            format: 'float',
+                            description: '1 günlük getiri (%)',
+                            example: 0.197,
+                            nullable: true
                         },
-                        fund_type: {
-                            type: 'object',
-                            description: 'Fon tipi detayları',
-                            properties: {
-                                type: {
-                                    type: 'string',
-                                    description: 'Fon tipi kodu',
-                                    example: 'degisken',
-                                    enum: [
-                                        'altin',
-                                        'borclanma_araclari',
-                                        'degisken',
-                                        'fon_sepeti',
-                                        'gumus',
-                                        'hisse_senedi',
-                                        'hisse_senedi_yogun',
-                                        'karma',
-                                        'katilim',
-                                        'kiymetli_madenler',
-                                        'para_piyasasi',
-                                        'serbest',
-                                        'yabanci',
-                                        'diger'
-                                    ]
-                                },
-                                short_name: {
-                                    type: 'string',
-                                    description: 'Fon tipi kısa adı',
-                                    example: 'Değişken Fon'
-                                },
-                                long_name: {
-                                    type: 'string',
-                                    description: 'Fon tipi uzun adı',
-                                    example: 'Değişken Şemsiye Fonu'
-                                },
-                                group_name: {
-                                    type: 'string',
-                                    description: 'Fon grubu adı',
-                                    example: 'Değişken Fonlar'
-                                }
-                            }
+                        yield_1w: {
+                            type: 'number',
+                            format: 'float',
+                            description: '1 haftalık getiri (%)',
+                            example: 1.183,
+                            nullable: true
                         },
-                        last_historical_value: {
-                            type: 'object',
-                            description: 'Son tarihli değerler',
-                            properties: {
-                                date: {
-                                    type: 'string',
-                                    format: 'date',
-                                    description: 'Değer tarihi',
-                                    example: '2024-12-12'
-                                },
-                                value: {
-                                    type: 'number',
-                                    format: 'float',
-                                    description: 'Fon birim pay değeri',
-                                    example: '24.356291'
-                                },
-                                aum: {
-                                    type: 'number',
-                                    format: 'float',
-                                    description: 'Dönem başı portföy büyüklüğü',
-                                    example: '75387892.00'
-                                },
-                                shares_active: {
-                                    type: 'number',
-                                    format: 'float',
-                                    description: 'Dönem başı pay sayısı',
-                                    example: '3098089.00'
-                                },
-                                yield: {
-                                    type: 'number',
-                                    format: 'float',
-                                    description: 'Günlük getiri (%)',
-                                    example: '0.092937'
-                                },
-                                cumulative_cashflow: {
-                                    type: 'number',
-                                    format: 'float',
-                                    description: 'Kümülatif nakit akışı',
-                                    example: '-625703.708462'
-                                },
-                                investor_count: {
-                                    type: 'integer',
-                                    description: 'Dönem başı yatırımcı sayısı',
-                                    example: 983
-                                }
-                            }
+                        yield_1m: {
+                            type: 'number',
+                            format: 'float',
+                            description: '1 aylık getiri (%)',
+                            example: 8.685,
+                            nullable: true
+                        },
+                        yield_3m: {
+                            type: 'number',
+                            format: 'float',
+                            description: '3 aylık getiri (%)',
+                            example: 8.124,
+                            nullable: true
+                        },
+                        yield_6m: {
+                            type: 'number',
+                            format: 'float',
+                            description: '6 aylık getiri (%)',
+                            example: 2.9334,
+                            nullable: true
+                        },
+                        yield_ytd: {
+                            type: 'number',
+                            format: 'float',
+                            description: 'Yıl başından bugüne getiri (%)',
+                            example: 46.0666,
+                            nullable: true
+                        },
+                        yield_1y: {
+                            type: 'number',
+                            format: 'float',
+                            description: '1 yıllık getiri (%)',
+                            example: 45.2268,
+                            nullable: true
+                        },
+                        yield_3y: {
+                            type: 'number',
+                            format: 'float',
+                            description: '3 yıllık getiri (%)',
+                            example: 509.718,
+                            nullable: true
+                        },
+                        yield_5y: {
+                            type: 'number',
+                            format: 'float',
+                            description: '5 yıllık getiri (%)',
+                            example: 1166.1549,
+                            nullable: true
                         }
                     }
                 },
@@ -1328,13 +1861,92 @@ Performansı artırmak için önbellek kullanılmaktadır:
                             type: 'string',
                             format: 'date',
                             description: 'Değer tarihi',
-                            example: '2023-01-01'
+                            example: '2023-12-14'
                         },
                         value: {
                             type: 'number',
                             format: 'float',
                             description: 'Fon birim pay değeri',
-                            example: 12.345
+                            example: 12.345678
+                        },
+                        aum: {
+                            type: 'number',
+                            format: 'float',
+                            description: 'Portföy büyüklüğü',
+                            example: 123456789.12,
+                            nullable: true
+                        },
+                        shares_active: {
+                            type: 'number',
+                            format: 'float',
+                            description: 'Pay sayısı',
+                            example: 1234567.89,
+                            nullable: true
+                        },
+                        yield: {
+                            type: 'number',
+                            format: 'float',
+                            description: 'Günlük getiri (%)',
+                            example: 1.23,
+                            nullable: true
+                        },
+                        cumulative_cashflow: {
+                            type: 'number',
+                            format: 'float',
+                            description: 'Kümülatif nakit akışı',
+                            example: -12345.67,
+                            nullable: true
+                        },
+                        investor_count: {
+                            type: 'integer',
+                            description: 'Yatırımcı sayısı',
+                            example: 1234,
+                            nullable: true
+                        }
+                    }
+                },
+                DailyStatistics: {
+                    type: 'object',
+                    required: ['date', 'total_funds', 'total_companies', 'total_investors', 'total_aum', 'avg_profit', 'avg_loss'],
+                    properties: {
+                        date: {
+                            type: 'string',
+                            format: 'date',
+                            description: 'İstatistik tarihi',
+                            example: '2023-12-14'
+                        },
+                        total_funds: {
+                            type: 'integer',
+                            description: 'Toplam fon sayısı',
+                            example: 1250
+                        },
+                        total_companies: {
+                            type: 'integer',
+                            description: 'Toplam şirket sayısı',
+                            example: 45
+                        },
+                        total_investors: {
+                            type: 'integer',
+                            description: 'Toplam yatırımcı sayısı',
+                            example: 250000
+                        },
+                        total_aum: {
+                            type: 'number',
+                            format: 'float',
+                            description: 'Toplam portföy büyüklüğü',
+                            example: 123456789.12
+                        },
+                        avg_profit: {
+                            type: 'number',
+                            format: 'float',
+                            description: 'Ortalama kazanç (%)',
+                            example: 1.2345
+                        },
+                        avg_loss: {
+                            type: 'number',
+                            format: 'float',
+                            description: 'Ortalama kayıp (%)',
+                            example: -0.5678
                         }
                     }
                 },
@@ -1539,7 +2151,7 @@ Performansı artırmak için önbellek kullanılmaktadır:
                                     yield_ytd: {
                                         type: 'number',
                                         format: 'float',
-                                        description: 'Yıl başından bugüne getiri',
+                                        description: 'Yıl ba��ından bugüne getiri',
                                         example: 15.67
                                     },
                                     yield_1y: {

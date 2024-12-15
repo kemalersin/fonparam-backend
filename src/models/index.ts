@@ -4,6 +4,8 @@ import { FundYield } from './FundYield';
 import FundHistoricalValue from './FundHistoricalValue';
 import Fund from './Fund';
 import FundType from './FundType';
+import DailyStatistics from './DailyStatistics';
+import FundTypeYields from './FundTypeYields';
 import sequelize from '../config/database';
 
 // İlişkileri tanımla
@@ -58,10 +60,24 @@ FundHistoricalValue.belongsTo(Fund, {
     as: 'fund'
 });
 
+FundTypeYields.belongsTo(FundType, {
+    targetKey: 'type',
+    foreignKey: 'type',
+    as: 'fund_type'
+});
+
+FundType.hasOne(FundTypeYields, {
+    sourceKey: 'type',
+    foreignKey: 'type',
+    as: 'yields'
+});
+
 export {
     FundManagementCompany,
     Fund,
     FundType,
     FundYield,
-    FundHistoricalValue
+    FundHistoricalValue,
+    DailyStatistics,
+    FundTypeYields
 }; 

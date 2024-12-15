@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { query, param, validationResult, ValidationChain, body } from 'express-validator';
+import { FundTypeEnum } from '../types';
 
 // Validasyon sonuçlarını kontrol eden middleware
 const validate = (req: Request, res: Response, next: NextFunction) => {
@@ -248,4 +249,67 @@ export const validateAnalysisRequest = [
         }
         next();
     }
-]; 
+];
+
+// Tarih parametresi için validasyon
+export const validateDateParam = [
+    param('date')
+        .isDate()
+        .withMessage('Geçerli bir tarih girilmelidir (YYYY-MM-DD)'),
+    validate
+];
+
+// Fon tipi parametresi için validasyon
+export const validateFundType = [
+    param('type')
+        .isString()
+        .custom(value => {
+            if (!Object.values(FundTypeEnum).includes(value as FundTypeEnum)) {
+                throw new Error('Geçersiz fon tipi');
+            }
+            return true;
+        }),
+    validate
+];
+
+// İstatistik listesi için validasyon
+export const validateStatisticsList = [
+    query('start_date')
+        .optional()
+        .isDate()
+        .withMessage('Başlangıç tarihi geçerli bir tarih olmalıdır (YYYY-MM-DD)'),
+    query('end_date')
+        .optional()
+        .isDate()
+        .withMessage('Bitiş tarihi geçerli bir tarih olmalıdır (YYYY-MM-DD)'),
+    query('sort')
+        .optional()
+        .isIn(['date', 'total_funds', 'total_companies', 'total_investors', 'total_aum', 'avg_profit', 'avg_loss'])
+        .withMessage('Geçersiz sıralama alanı'),
+    query('order')
+        .optional()
+        .isIn(['ASC', 'DESC', 'asc', 'desc'])
+        .withMessage('Geçersiz sıralama yönü'),
+    validate
+];
+
+// Fon tipleri listesi için validasyon kuralları
+export const listFundTypesValidation: ValidationChain[] = [
+    query('sort').optional().isIn(['type', 'short_name', 'long_name', 'group_name']),
+    query('order').optional().isIn(['asc', 'desc', 'ASC', 'DESC']),
+    query('min_total_funds').optional().isInt({ min: 0 }).withMessage('Minimum fon sayısı 0 veya daha büyük olmalıdır'),
+    query('max_total_funds').optional().isInt({ min: 0 }).withMessage('Maksimum fon sayısı 0 veya daha büyük olmalıdır')
+        .custom((value, { req }) => {
+            const min = req.query.min_total_funds ? parseInt(req.query.min_total_funds.toString()) : 0;
+            const max = parseInt(value);
+            if (max < min) {
+                throw new Error('Maksimum fon sayısı minimum fon sayısından küçük olamaz');
+            }
+            return true;
+        })
+];
+
+export const validateListFundTypes = [
+    ...listFundTypesValidation,
+    validate
+];
