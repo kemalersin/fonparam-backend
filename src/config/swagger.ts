@@ -23,26 +23,12 @@ Bu API ile fonların güncel ve geçmiş verilerine erişebilir, karşılaştır
 
 ## Rate Limiting
 
-API'nin tüm endpointleri için rate limiting uygulanmaktadır:
-
-- Her endpoint için 15 dakikada maksimum 25 istek yapılabilir
-- Her endpoint için günlük maksimum 100 istek yapılabilir
-- Rate limit aşıldığında 429 (Too Many Requests) hatası döner
-- Rate limit sayaçları IP bazlı tutulur
-- Whitelist'teki IP ve domain'ler rate limit'ten etkilenmez
+24 saat içinde en fazla 100 istek.
 
 ## Önbellek (Cache)
 
-Performansı artırmak için önbellek kullanılmaktadır:
-
-- Fon listesi: 30 dakika
-- Fon detayı: 30 dakika
-- Fon analizi: 30 dakika
-- Geçmiş veriler: 30 dakika
-- Karşılaştırma: 30 dakika
-- Şirket listesi: 30 dakika
-- Şirket detayı: 30 dakika
-            `,
+Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
+<br><br>`,
             contact: {
                 name: 'API Desteği',
                 email: 'mail@kemalersin.com',
@@ -55,7 +41,7 @@ Performansı artırmak için önbellek kullanılmaktadır:
         },
         servers: [
             {
-                url: 'http://localhost:3000/api',
+                url: 'http://localhost:3000',
                 description: 'Geliştirme Ortamı'
             },
             {
@@ -942,7 +928,7 @@ Performansı artırmak için önbellek kullanılmaktadır:
                                                 aum: {
                                                     type: 'number',
                                                     format: 'float',
-                                                    description: 'Portföy büyüklüğü',
+                                                    description: 'Portföy büyüklüğ��',
                                                     example: 97469445.00
                                                 },
                                                 shares_active: {
@@ -2151,7 +2137,7 @@ Performansı artırmak için önbellek kullanılmaktadır:
                                     yield_ytd: {
                                         type: 'number',
                                         format: 'float',
-                                        description: 'Yıl ba��ından bugüne getiri',
+                                        description: 'Yıl başından bugüne getiri',
                                         example: 15.67
                                     },
                                     yield_1y: {

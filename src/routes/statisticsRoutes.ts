@@ -8,7 +8,7 @@ const router = express.Router();
 
 // Tüm istatistikleri listele
 router.get('/', 
-    rateLimiter('statistics-list', RATE_LIMITS.FUNDS_LIST.MAX, RATE_LIMITS.FUNDS_LIST.WINDOW_MINUTES),
+    rateLimiter,
     validateStatisticsList,
     cacheMiddleware(CACHE_DURATIONS.FUNDS_LIST), 
     listStatistics
@@ -16,14 +16,14 @@ router.get('/',
 
 // Son istatistikleri getir
 router.get('/latest', 
-    rateLimiter('statistics-latest', RATE_LIMITS.FUNDS_LIST.MAX, RATE_LIMITS.FUNDS_LIST.WINDOW_MINUTES),
+    rateLimiter,
     cacheMiddleware(CACHE_DURATIONS.FUNDS_LIST), 
     getLatestStatistics
 );
 
 // Belirli bir günün istatistiklerini getir
 router.get('/:date', 
-    rateLimiter('statistics-detail', RATE_LIMITS.FUNDS_LIST.MAX, RATE_LIMITS.FUNDS_LIST.WINDOW_MINUTES),
+    rateLimiter,
     validateDateParam, 
     cacheMiddleware(CACHE_DURATIONS.FUNDS_LIST), 
     getStatisticsByDate

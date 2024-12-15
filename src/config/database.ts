@@ -1,14 +1,24 @@
 import { Sequelize } from 'sequelize';
-import dotenv from 'dotenv';
 
-dotenv.config();
+// Database konfigürasyonunu kontrol et
+const dbConfig = {
+    database: process.env.DB_NAME || 'fonparam',
+    username: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || '',
+    host: process.env.DB_HOST || 'localhost'
+};
+
+console.log('Database Config in database.ts:', {
+    ...dbConfig,
+    password: dbConfig.password ? '[HIDDEN]' : 'empty'
+});
 
 const sequelize = new Sequelize(
-    process.env.DB_NAME || 'fonparam',
-    process.env.DB_USER || 'root',
-    process.env.DB_PASSWORD || '',
+    dbConfig.database,
+    dbConfig.username,
+    dbConfig.password,
     {
-        host: process.env.DB_HOST || 'localhost',
+        host: dbConfig.host,
         dialect: 'mysql',
         dialectOptions: {
             charset: 'utf8mb4'

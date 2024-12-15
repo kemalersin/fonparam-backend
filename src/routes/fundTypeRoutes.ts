@@ -8,7 +8,7 @@ const router = express.Router();
 
 // Tüm fon tiplerini listele
 router.get('/', 
-    rateLimiter('fund-types-list', RATE_LIMITS.FUNDS_LIST.MAX, RATE_LIMITS.FUNDS_LIST.WINDOW_MINUTES),
+    rateLimiter,
     validateListFundTypes,
     cacheMiddleware(CACHE_DURATIONS.FUNDS_LIST), 
     listFundTypes
@@ -16,7 +16,7 @@ router.get('/',
 
 // Belirli bir fon tipinin detaylarını getir
 router.get('/:type', 
-    rateLimiter('fund-type-detail', RATE_LIMITS.FUNDS_LIST.MAX, RATE_LIMITS.FUNDS_LIST.WINDOW_MINUTES),
+    rateLimiter,
     validateFundType, 
     cacheMiddleware(CACHE_DURATIONS.FUNDS_LIST), 
     getFundType
