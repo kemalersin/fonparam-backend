@@ -54,11 +54,11 @@ export const buildFundFilters = (query: FundFilters): BaseFilters => {
     }
 
     if (query.management_company) {
-        filters.push({ '$fund.management_company.code$': query.management_company });
+        filters.push({ '$management_company.code$': query.management_company });
     }
 
     if (query.tefas !== undefined) {
-        filters.push({ '$fund.tefas$': query.tefas === 'true' });
+        filters.push({ tefas: query.tefas === 'true' });
     }
 
     if (query.code) {

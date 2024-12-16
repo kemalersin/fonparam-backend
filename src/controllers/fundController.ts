@@ -261,7 +261,8 @@ export const getTopPerformingFunds = async (req: Request, res: Response): Promis
 
             const funds = await Fund.findAll({
                 where: {
-                    code: { [Op.notIn]: referenceCodes }
+                    code: { [Op.notIn]: referenceCodes },
+                    tefas: true
                 },
                 attributes: ['code', 'title', 'tefas'],
                 include: [
@@ -286,6 +287,9 @@ export const getTopPerformingFunds = async (req: Request, res: Response): Promis
 
         // Referans fon belirtilmemişse en iyi performanslı fonlardan rastgele 10 tane getir
         const topFunds = await Fund.findAll({
+            where: {
+                tefas: true
+            },
             attributes: ['code', 'title', 'tefas'],
             include: [
                 INCLUDES.MANAGEMENT_COMPANY,
