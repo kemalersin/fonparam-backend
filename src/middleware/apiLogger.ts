@@ -49,7 +49,8 @@ export const apiLogger = async (req: Request, res: Response, next: NextFunction)
     // IP adresini al
     const ip = req.headers['x-forwarded-for'] || 
                req.socket.remoteAddress || 
-               req.ip;
+               req.ip || 
+               'unknown';
 
     // API key'i al
     const apiKey = req.header('X-API-Key');
@@ -83,11 +84,11 @@ export const apiLogger = async (req: Request, res: Response, next: NextFunction)
         return originalJson.call(this, body);
     };
 
-    res.end = function (chunk?: any, encoding?: string, callback?: () => void) {
+    res.end = function (chunk?: any, cb?: (() => void) | BufferEncoding, callback?: () => void) {
         const endTime = Date.now();
         const responseTime = endTime - startTime;
         createLog(responseTime);
-        return originalEnd.call(this, chunk, encoding, callback);
+        return originalEnd.call(this, chunk, cb as BufferEncoding, callback);
     };
 
     next();

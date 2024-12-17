@@ -1,6 +1,6 @@
 import { Op, Sequelize } from 'sequelize';
 import { FundManagementCompany } from './FundManagementCompany';
-import { FundYield } from './FundYield';
+import FundYield from './FundYield';
 import FundHistoricalValue from './FundHistoricalValue';
 import Fund from './Fund';
 import FundType from './FundType';

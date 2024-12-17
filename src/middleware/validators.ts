@@ -300,6 +300,7 @@ export const listFundTypesValidation: ValidationChain[] = [
     query('min_total_funds').optional().isInt({ min: 0 }).withMessage('Minimum fon sayısı 0 veya daha büyük olmalıdır'),
     query('max_total_funds').optional().isInt({ min: 0 }).withMessage('Maksimum fon sayısı 0 veya daha büyük olmalıdır')
         .custom((value, { req }) => {
+            if (!req.query) return true;
             const min = req.query.min_total_funds ? parseInt(req.query.min_total_funds.toString()) : 0;
             const max = parseInt(value);
             if (max < min) {

@@ -2,7 +2,7 @@ import express from 'express';
 import { listFundTypes, getFundType } from '../controllers/fundTypeController';
 import { validateFundType, validateListFundTypes } from '../middleware/validators';
 import { cacheMiddleware, CACHE_DURATIONS } from '../services/cacheService';
-import { rateLimiter, RATE_LIMITS } from '../middleware/rateLimiter';
+import { rateLimiter } from '../middleware/rateLimiter';
 
 const router = express.Router();
 

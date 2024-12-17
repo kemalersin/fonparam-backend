@@ -2,7 +2,7 @@ import express from 'express';
 import { listStatistics, getStatisticsByDate, getLatestStatistics } from '../controllers/statisticsController';
 import { validateDateParam, validateStatisticsList } from '../middleware/validators';
 import { cacheMiddleware, CACHE_DURATIONS } from '../services/cacheService';
-import { rateLimiter, RATE_LIMITS } from '../middleware/rateLimiter';
+import { rateLimiter } from '../middleware/rateLimiter';
 
 const router = express.Router();
 

@@ -1,6 +1,8 @@
 import { Model, DataTypes } from 'sequelize';
 import sequelize from '../config/database';
 import { FundTypeEnum } from '../types';
+import FundType from './FundType';
+import FundYield from './FundYield';
 
 class Fund extends Model {
     declare code: string;
@@ -10,6 +12,8 @@ class Fund extends Model {
     declare tefas: boolean;
     declare has_historical_data: boolean;
     declare historical_data_check_date: Date;
+    declare fund_type?: FundType;
+    declare yield?: FundYield;
 }
 
 Fund.init({

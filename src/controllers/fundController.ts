@@ -107,7 +107,7 @@ export const listFunds = async (req: TypedRequest<FundFilters>, res: Response): 
     try {
         const filters = buildFundFilters(req.query);
         const sort = req.query.sort || 'code';
-        const order = (req.query.order || 'ASC').toUpperCase() as 'ASC' | 'DESC';
+        const order = (req.query.order?.toString() || 'ASC').toUpperCase() as 'ASC' | 'DESC';
 
         // Sıralama alanını kontrol et
         const sortField = SORT_FIELDS[sort as keyof typeof SORT_FIELDS] || SORT_FIELDS.title;
@@ -165,7 +165,7 @@ export const getFundHistoricalValues = async (req: Request, res: Response): Prom
     try {
         const { code } = req.params;
         const sort = req.query.sort || 'date';
-        const order = (req.query.order || 'DESC').toUpperCase() as 'ASC' | 'DESC';
+        const order = (req.query.order?.toString() || 'DESC').toUpperCase() as 'ASC' | 'DESC';
 
         // Sıralama alanını kontrol et
         const validSortFields = ['date', 'value', 'aum', 'shares_active', 'yield', 'cumulative_cashflow', 'investor_count'];
@@ -226,7 +226,7 @@ export const compareFunds = async (req: Request, res: Response): Promise<void> =
             return;
         }
 
-        res.json(formatPaginatedResponse(funds));
+        res.json(formatPaginatedResponse(funds, funds.length, 1));
     } catch (error) {
         res.status(500).json({ error: (error as Error).message });
     }
@@ -282,7 +282,7 @@ export const getTopPerformingFunds = async (req: Request, res: Response): Promis
                 limit: 10
             });
 
-            return res.json(formatPaginatedResponse(funds, funds.length, 1, 10));
+            return res.json(formatPaginatedResponse(funds, funds.length, 1));
         }
 
         // Referans fon belirtilmemişse en iyi performanslı fonlardan rastgele 10 tane getir
@@ -307,7 +307,7 @@ export const getTopPerformingFunds = async (req: Request, res: Response): Promis
             limit: 10
         });
 
-        res.json(formatPaginatedResponse(topFunds));
+        return res.json(formatPaginatedResponse(topFunds, topFunds.length, 1));
     } catch (error) {
         return res.status(500).json({
             error: 'Fonlar getirilirken bir hata oluştu',

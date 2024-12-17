@@ -105,4 +105,4 @@ FundYield.init(
     }
 );
 
-export { FundYield }; 
+export default FundYield; 

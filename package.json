@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "FonParam API Backend",
   "main": "dist/app.js",
+  "engines": {
+    "node": ">=20.10.0"
+  },
   "scripts": {
     "start": "node dist/app.js",
     "dev": "ts-node-dev --respawn --transpile-only src/app.ts",
