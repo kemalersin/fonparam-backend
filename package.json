@@ -30,6 +30,7 @@
     "express-rate-limit": "^7.5.0",
     "express-validator": "^7.0.1",
     "helmet": "^7.0.0",
+    "ipaddr.js": "^2.2.0",
     "mysql2": "^3.3.1",
     "node-cache": "^5.1.2",
     "rate-limit-redis": "^4.2.0",

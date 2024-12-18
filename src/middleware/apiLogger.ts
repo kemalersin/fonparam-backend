@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import ApiLog from '../models/ApiLog';
+import * as ipaddr from 'ipaddr.js';
 
 // Whitelist değerlerini al
 const whitelistedIPs = process.env.RATE_LIMIT_WHITELIST_IPS?.split(',') || [];
@@ -7,7 +8,23 @@ const whitelistedDomains = process.env.RATE_LIMIT_WHITELIST_DOMAINS?.split(',') 
 
 // IP'nin whitelist'te olup olmadığını kontrol et
 const isIpWhitelisted = (ip: string): boolean => {
-    return whitelistedIPs.includes(ip.trim());
+    const addr = ipaddr.parse(ip.trim());
+    
+    return whitelistedIPs.some(whitelistedIp => {
+        try {
+            if (whitelistedIp.includes('/')) {
+                // CIDR notasyonu için kontrol
+                const [range, bits] = whitelistedIp.split('/');
+                const rangeAddr = ipaddr.parse(range);
+                return addr.match(rangeAddr, parseInt(bits));
+            } else {
+                // Tek IP için kontrol
+                return ip.trim() === whitelistedIp.trim();
+            }
+        } catch {
+            return false;
+        }
+    });
 };
 
 // Domain'in whitelist'te olup olmadığını kontrol et
