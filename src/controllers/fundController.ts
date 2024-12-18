@@ -120,8 +120,7 @@ export const listFunds = async (req: TypedRequest<FundFilters>, res: Response): 
             include: [
                 INCLUDES.MANAGEMENT_COMPANY,
                 INCLUDES.FUND_TYPE,
-                INCLUDES.YIELD,
-                INCLUDES.LAST_HISTORICAL_VALUE
+                INCLUDES.YIELD
             ],
             order: [[...sortField, order]],
             subQuery: false
