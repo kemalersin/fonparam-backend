@@ -225,7 +225,7 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                                             company: {
                                                 code: 'APY',
                                                 title: 'ATA PORTFÖY YÖNETİMİ A.Ş.',
-                                                logo: 'http://localhost:3000/public/logos/ata_portfoy_icon.png',
+                                                logo: 'https://api.fonparam.com/public/logos/ata_portfoy_icon.png',
                                                 total_funds: 22,
                                                 avg_yield_1d: -0.0042,
                                                 avg_yield_1w: 1.0066,
@@ -857,34 +857,14 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                             example: '2023-12-31'
                         },
                         {
-                            name: 'interval',
-                            in: 'query',
-                            description: 'Veri aralığı',
-                            schema: {
-                                type: 'string',
-                                enum: ['daily', 'weekly', 'monthly'],
-                                default: 'daily'
-                            },
-                            example: 'daily'
-                        },
-                        {
                             name: 'sort',
                             in: 'query',
                             description: 'Sıralama alanı',
                             schema: {
                                 type: 'string',
-                                enum: [
-                                    'date',
-                                    'value',
-                                    'aum',
-                                    'shares_active',
-                                    'yield',
-                                    'cumulative_cashflow',
-                                    'investor_count'
-                                ],
+                                enum: ['date', 'value', 'aum', 'shares_active', 'yield', 'cumulative_cashflow', 'investor_count'],
                                 default: 'date'
-                            },
-                            example: 'date'
+                            }
                         },
                         {
                             name: 'order',
@@ -894,8 +874,28 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                                 type: 'string',
                                 enum: ['ASC', 'DESC'],
                                 default: 'DESC'
-                            },
-                            example: 'DESC'
+                            }
+                        },
+                        {
+                            name: 'page',
+                            in: 'query',
+                            description: 'Sayfa numarası',
+                            schema: {
+                                type: 'integer',
+                                minimum: 1,
+                                default: 1
+                            }
+                        },
+                        {
+                            name: 'limit',
+                            in: 'query',
+                            description: 'Sayfa başına kayıt sayısı',
+                            schema: {
+                                type: 'integer',
+                                minimum: 1,
+                                maximum: 1000,
+                                default: 100
+                            }
                         }
                     ],
                     responses: {
@@ -904,87 +904,43 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                             content: {
                                 'application/json': {
                                     schema: {
-                                        type: 'array',
-                                        items: {
-                                            type: 'object',
-                                            properties: {
-                                                code: {
-                                                    type: 'string',
-                                                    description: 'Fon kodu',
-                                                    example: 'AAK'
-                                                },
-                                                date: {
-                                                    type: 'string',
-                                                    format: 'date',
-                                                    description: 'Değer tarihi',
-                                                    example: '2023-12-29'
-                                                },
-                                                value: {
-                                                    type: 'number',
-                                                    format: 'float',
-                                                    description: 'Fon birim pay değeri',
-                                                    example: 16.170459
-                                                },
-                                                aum: {
-                                                    type: 'number',
-                                                    format: 'float',
-                                                    description: 'Portföy büyüklüğ��',
-                                                    example: 97469445.00
-                                                },
-                                                shares_active: {
-                                                    type: 'number',
-                                                    format: 'float',
-                                                    description: 'Pay sayısı',
-                                                    example: 6027624.00
-                                                },
-                                                yield: {
-                                                    type: 'number',
-                                                    format: 'float',
-                                                    description: 'Günlük getiri (%)',
-                                                    example: 1.064131
-                                                },
-                                                cumulative_cashflow: {
-                                                    type: 'number',
-                                                    format: 'float',
-                                                    description: 'Kümülatif nakit akışı',
-                                                    example: -29122.996659,
-                                                    nullable: true
-                                                },
-                                                investor_count: {
-                                                    type: 'integer',
-                                                    description: 'Yatırımcı sayısı',
-                                                    example: 666
+                                        type: 'object',
+                                        required: ['total', 'page', 'limit', 'data'],
+                                        properties: {
+                                            total: {
+                                                type: 'integer',
+                                                description: 'Toplam kayıt sayısı',
+                                                example: 365
+                                            },
+                                            page: {
+                                                type: 'integer',
+                                                description: 'Mevcut sayfa numarası',
+                                                example: 1
+                                            },
+                                            limit: {
+                                                type: 'integer',
+                                                description: 'Sayfa başına kayıt sayısı',
+                                                example: 100
+                                            },
+                                            data: {
+                                                type: 'array',
+                                                items: {
+                                                    $ref: '#/components/schemas/FundHistoricalValue'
                                                 }
                                             }
-                                        },
-                                        example: [
-                                            {
-                                                "code": "AAK",
-                                                "date": "2023-12-29",
-                                                "value": 16.170459,
-                                                "aum": 97469445.00,
-                                                "shares_active": 6027624.00,
-                                                "yield": 1.064131,
-                                                "cumulative_cashflow": -29122.996659,
-                                                "investor_count": 666
-                                            },
-                                            {
-                                                "code": "AAK",
-                                                "date": "2023-12-28",
-                                                "value": 16.000196,
-                                                "aum": 96471981.00,
-                                                "shares_active": 6029425.00,
-                                                "yield": 0.064597,
-                                                "cumulative_cashflow": null,
-                                                "investor_count": 665
-                                            }
-                                        ]
+                                        }
                                     }
                                 }
                             }
                         },
-                        '500': {
+                        '400': {
                             $ref: '#/components/responses/ValidationError'
+                        },
+                        '404': {
+                            $ref: '#/components/responses/NotFound'
+                        },
+                        '500': {
+                            $ref: '#/components/responses/ServerError'
                         }
                     }
                 }
@@ -1529,7 +1485,7 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                         logo: {
                             type: 'string',
                             description: 'Şirket logosu URL',
-                            example: 'http://localhost:3000/public/logos/ata_portfoy_icon.png'
+                            example: 'https://api.fonparam.com/public/logos/ata_portfoy_icon.png'
                         },
                         total_funds: {
                             type: 'integer',

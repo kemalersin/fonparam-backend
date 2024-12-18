@@ -164,6 +164,8 @@ export const getFundHistoricalValues = async (req: Request, res: Response): Prom
         const { code } = req.params;
         const sort = req.query.sort || 'date';
         const order = (req.query.order?.toString() || 'DESC').toUpperCase() as 'ASC' | 'DESC';
+        const page = parseInt(req.query.page?.toString() || '1');
+        const limit = parseInt(req.query.limit?.toString() || '100');
 
         // Sıralama alanını kontrol et
         const validSortFields = ['date', 'value', 'aum', 'shares_active', 'yield', 'cumulative_cashflow', 'investor_count'];
@@ -173,12 +175,14 @@ export const getFundHistoricalValues = async (req: Request, res: Response): Prom
         }
 
         const filters = buildHistoricalValueFilters(req.query);
-        const values = await FundHistoricalValue.findAll({
+        const { count, rows: values } = await FundHistoricalValue.findAndCountAll({
             where: {
                 code,
                 ...filters.where
             },
             order: [[sort as string, order]],
+            limit,
+            offset: (page - 1) * limit,
             raw: true
         });
 
@@ -194,10 +198,15 @@ export const getFundHistoricalValues = async (req: Request, res: Response): Prom
             investor_count: value.investor_count
         }));
 
-        res.json(transformedValues);
+        res.json({
+            total: count,
+            page,
+            limit,
+            data: transformedValues
+        });
     } catch (error) {
         console.error('Geçmiş değerler getirilirken hata oluştu:', error);
-        res.status(500).json({ error: 'Geçmiş değerler getirilirken bir hata olu��tu' });
+        res.status(500).json({ error: 'Geçmiş değerler getirilirken bir hata oluştu' });
     }
 };
 
