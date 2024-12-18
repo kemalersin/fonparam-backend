@@ -69,7 +69,6 @@ const SORT_FIELDS = {
 
 const formatFundResponse = (fund: Fund) => {
     const orgFund = fund.get({ plain: false });
-    const lastHistoricalValue = orgFund.last_historical_value;
 
     return {
         code: orgFund.code,
@@ -87,7 +86,7 @@ const formatFundResponse = (fund: Fund) => {
         type: orgFund.fund_type.short_name,
         management_company: orgFund.management_company,
         fund_type: orgFund.fund_type,
-        last_historical_value: lastHistoricalValue || null
+        ...(orgFund.last_historical_value && { last_historical_value: orgFund.last_historical_value })
     };
 };
 
@@ -198,7 +197,7 @@ export const getFundHistoricalValues = async (req: Request, res: Response): Prom
         res.json(transformedValues);
     } catch (error) {
         console.error('Geçmiş değerler getirilirken hata oluştu:', error);
-        res.status(500).json({ error: 'Geçmiş değerler getirilirken bir hata oluştu' });
+        res.status(500).json({ error: 'Geçmiş değerler getirilirken bir hata olu��tu' });
     }
 };
 
