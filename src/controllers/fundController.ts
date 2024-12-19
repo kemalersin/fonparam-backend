@@ -197,7 +197,7 @@ export const getFundHistoricalValues = async (req: Request, res: Response): Prom
         res.json(transformedValues);
     } catch (error) {
         console.error('Geçmiş değerler getirilirken hata oluştu:', error);
-        res.status(500).json({ error: 'Geçmiş değerler getirilirken bir hata olu��tu' });
+        res.status(500).json({ error: 'Geçmiş değerler getirilirken bir hata oluştu' });
     }
 };
 

@@ -820,7 +820,7 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                 get: {
                     tags: ['Fonlar'],
                     summary: 'Fonun geçmiş değerlerini getirir',
-                    description: 'Belirtilen fonun geçmiş birim pay değerlerini getirir',
+                    description: 'Belirtilen fonun geçmiş birim pay değerlerini ve diğer finansal verilerini getirir. Veriler günlük, haftalık veya aylık olarak gruplanabilir.',
                     parameters: [
                         {
                             name: 'code',
@@ -840,8 +840,7 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                             description: 'Başlangıç tarihi (YYYY-MM-DD)',
                             schema: {
                                 type: 'string',
-                                format: 'date',
-                                default: '2023-01-01'
+                                format: 'date'
                             },
                             example: '2023-01-01'
                         },
@@ -851,10 +850,19 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                             description: 'Bitiş tarihi (YYYY-MM-DD)',
                             schema: {
                                 type: 'string',
-                                format: 'date',
-                                default: '2023-12-31'
+                                format: 'date'
                             },
                             example: '2023-12-31'
+                        },
+                        {
+                            name: 'interval',
+                            in: 'query',
+                            description: 'Veri aralığı (günlük, haftalık veya aylık)',
+                            schema: {
+                                type: 'string',
+                                enum: ['daily', 'weekly', 'monthly'],
+                                default: 'daily'
+                            }
                         },
                         {
                             name: 'sort',
@@ -875,27 +883,6 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                                 enum: ['ASC', 'DESC'],
                                 default: 'DESC'
                             }
-                        },
-                        {
-                            name: 'page',
-                            in: 'query',
-                            description: 'Sayfa numarası',
-                            schema: {
-                                type: 'integer',
-                                minimum: 1,
-                                default: 1
-                            }
-                        },
-                        {
-                            name: 'limit',
-                            in: 'query',
-                            description: 'Sayfa başına kayıt sayısı',
-                            schema: {
-                                type: 'integer',
-                                minimum: 1,
-                                maximum: 1000,
-                                default: 100
-                            }
                         }
                     ],
                     responses: {
@@ -904,28 +891,61 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                             content: {
                                 'application/json': {
                                     schema: {
-                                        type: 'object',
-                                        required: ['total', 'page', 'limit', 'data'],
-                                        properties: {
-                                            total: {
-                                                type: 'integer',
-                                                description: 'Toplam kayıt sayısı',
-                                                example: 365
-                                            },
-                                            page: {
-                                                type: 'integer',
-                                                description: 'Mevcut sayfa numarası',
-                                                example: 1
-                                            },
-                                            limit: {
-                                                type: 'integer',
-                                                description: 'Sayfa başına kayıt sayısı',
-                                                example: 100
-                                            },
-                                            data: {
-                                                type: 'array',
-                                                items: {
-                                                    $ref: '#/components/schemas/FundHistoricalValue'
+                                        type: 'array',
+                                        items: {
+                                            type: 'object',
+                                            required: ['code', 'date', 'value'],
+                                            properties: {
+                                                code: {
+                                                    type: 'string',
+                                                    description: 'Fon kodu',
+                                                    example: 'AAK'
+                                                },
+                                                date: {
+                                                    type: 'string',
+                                                    format: 'date',
+                                                    description: 'Değer tarihi',
+                                                    example: '2023-12-14'
+                                                },
+                                                value: {
+                                                    type: 'number',
+                                                    format: 'float',
+                                                    description: 'Fon birim pay değeri',
+                                                    example: 12.345678
+                                                },
+                                                aum: {
+                                                    type: 'number',
+                                                    format: 'float',
+                                                    description: 'Portföy büyüklüğü',
+                                                    example: 123456789.12,
+                                                    nullable: true
+                                                },
+                                                shares_active: {
+                                                    type: 'number',
+                                                    format: 'float',
+                                                    description: 'Pay sayısı',
+                                                    example: 1234567.89,
+                                                    nullable: true
+                                                },
+                                                yield: {
+                                                    type: 'number',
+                                                    format: 'float',
+                                                    description: 'Günlük getiri (%)',
+                                                    example: 1.23,
+                                                    nullable: true
+                                                },
+                                                cumulative_cashflow: {
+                                                    type: 'number',
+                                                    format: 'float',
+                                                    description: 'Kümülatif nakit akışı',
+                                                    example: -12345.67,
+                                                    nullable: true
+                                                },
+                                                investor_count: {
+                                                    type: 'integer',
+                                                    description: 'Yatırımcı sayısı',
+                                                    example: 1234,
+                                                    nullable: true
                                                 }
                                             }
                                         }
@@ -934,13 +954,52 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                             }
                         },
                         '400': {
-                            $ref: '#/components/responses/ValidationError'
+                            description: 'Geçersiz istek parametreleri',
+                            content: {
+                                'application/json': {
+                                    schema: {
+                                        type: 'object',
+                                        properties: {
+                                            error: {
+                                                type: 'string',
+                                                example: 'Geçersiz sıralama alanı'
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         },
                         '404': {
-                            $ref: '#/components/responses/NotFound'
+                            description: 'Fon bulunamadı',
+                            content: {
+                                'application/json': {
+                                    schema: {
+                                        type: 'object',
+                                        properties: {
+                                            error: {
+                                                type: 'string',
+                                                example: 'Belirtilen fon bulunamadı'
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         },
                         '500': {
-                            $ref: '#/components/responses/ServerError'
+                            description: 'Sunucu hatası',
+                            content: {
+                                'application/json': {
+                                    schema: {
+                                        type: 'object',
+                                        properties: {
+                                            error: {
+                                                type: 'string',
+                                                example: 'Geçmiş değerler getirilirken bir hata oluştu'
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }

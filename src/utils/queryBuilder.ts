@@ -100,20 +100,18 @@ export const buildHistoricalValueFilters = (query: { start_date?: string; end_da
 
     // Interval filtresi
     if (query.interval && query.interval !== 'daily') {
-        const subQuery = query.interval === 'weekly'
-            ? `
-                SELECT code, MAX(date) as max_date
-                FROM fund_historical_values
-                GROUP BY code, YEARWEEK(date, 1)
-            `
-            : `
-                SELECT code, MAX(date) as max_date
-                FROM fund_historical_values
-                GROUP BY code, DATE_FORMAT(date, '%Y-%m')
-            `;
+        const dateGroup = query.interval === 'weekly' 
+            ? 'YEARWEEK(date, 1)' 
+            : "DATE_FORMAT(date, '%Y-%m')";
 
         where[Op.and] = [
-            literal(`(code, date) IN (${subQuery})`)
+            literal(`NOT EXISTS (
+                SELECT 1 
+                FROM fund_historical_values fhv2 
+                WHERE fhv2.code = FundHistoricalValue.code 
+                AND ${dateGroup} = ${dateGroup.replace('date', 'FundHistoricalValue.date')}
+                AND fhv2.date > FundHistoricalValue.date
+            )`)
         ];
     }
 
