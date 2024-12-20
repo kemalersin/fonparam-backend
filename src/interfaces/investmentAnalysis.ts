@@ -38,6 +38,12 @@ export interface PeriodDetail {
     periodChangePercentage: number;   // O dönemdeki değişim (%)
     totalYield: number;        // O ana kadarki toplam getiri (tutar)
     totalYieldPercentage: number;     // O ana kadarki toplam getiri (%)
+    monthlyInflation: number;  // O aydaki enflasyon oranı (%)
+    cumulativeInflation: number; // O ana kadarki kümülatif enflasyon (%)
+    realPeriodChange: number;  // Enflasyondan arındırılmış dönem değişimi (tutar)
+    realPeriodChangePercentage: number; // Enflasyondan arındırılmış dönem değişimi (%)
+    realTotalYield: number;    // Enflasyondan arındırılmış toplam getiri (tutar)
+    realTotalYieldPercentage: number;  // Enflasyondan arındırılmış toplam getiri (%)
 }
 
 export interface InvestmentAnalysisSummary {
@@ -45,6 +51,9 @@ export interface InvestmentAnalysisSummary {
     currentValue: number;         // Güncel değer
     totalYield: number;           // Toplam getiri (tutar)
     totalYieldPercentage: number; // Toplam getiri (%)
+    cumulativeInflation: number;  // Toplam kümülatif enflasyon (%)
+    realTotalYield: number;       // Enflasyondan arındırılmış toplam getiri (tutar)
+    realTotalYieldPercentage: number; // Enflasyondan arındırılmış toplam getiri (%)
 }
 
 export interface InvestmentAnalysisResponse {

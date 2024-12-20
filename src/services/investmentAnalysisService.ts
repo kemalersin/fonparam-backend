@@ -1,4 +1,4 @@
-import { FundHistoricalValue, FundYield, Fund } from '../models';
+import { FundHistoricalValue, FundYield, Fund, InflationRate } from '../models';
 import { InvestmentAnalysisRequest, InvestmentAnalysisResponse, StartDate, YearlyIncrease, InvestmentAnalysisSummary, PeriodDetail } from '../interfaces/investmentAnalysis';
 import { Op, literal } from 'sequelize';
 
@@ -39,7 +39,7 @@ class InvestmentAnalysisService {
                 targetDate.setFullYear(targetDate.getFullYear() - 5);
                 break;
             case StartDate.year_start:
-                return new Date(targetDate.getFullYear(), 0, 1);
+                return new Date(targetDate.getFullYear(), 0, 2); // 2 Ocak'ı ayarla
             default:
                 throw new Error('Geçersiz başlangıç tarihi');
         }
@@ -102,7 +102,8 @@ class InvestmentAnalysisService {
     getHistoricalData = async (
         code: string,
         startDate: Date,
-        periodType: 'daily' | 'monthly'
+        periodType: 'daily' | 'monthly',
+        startDateType: StartDate
     ): Promise<FundHistoricalValue[]> => {
         const endDate = new Date();
         endDate.setHours(23, 59, 59, 999); // Günün sonuna ayarla
@@ -165,16 +166,42 @@ class InvestmentAnalysisService {
 
         // Aylık veri için her ayın hedef güne en yakın verisini al
         const targetDay = startDate.getDate(); // Hedef gün
+        const isYearStart = startDateType === StartDate.year_start;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
         const subQuery = `
             WITH monthly_data AS (
                 SELECT 
                     code,
                     date,
                     DATE_FORMAT(date, '%Y-%m') as month_group,
-                    ABS(DAY(date) - :targetDay) as day_diff,
+                    CASE 
+                        WHEN DATE_FORMAT(date, '%Y-%m') = DATE_FORMAT(:endDate, '%Y-%m') THEN 
+                            ABS(DATEDIFF(date, :endDate))
+                        ELSE 
+                            CASE 
+                                WHEN :isYearStart = 1 THEN 
+                                    ABS(DAY(date) - 2)
+                                ELSE 
+                                    ABS(DAY(date) - :targetDay)
+                            END
+                    END as day_diff,
                     ROW_NUMBER() OVER (
                         PARTITION BY code, DATE_FORMAT(date, '%Y-%m') 
-                        ORDER BY ABS(DAY(date) - :targetDay), date ASC
+                        ORDER BY 
+                            CASE 
+                                WHEN DATE_FORMAT(date, '%Y-%m') = DATE_FORMAT(:endDate, '%Y-%m') THEN 
+                                    ABS(DATEDIFF(date, :endDate))
+                                ELSE 
+                                    CASE 
+                                        WHEN :isYearStart = 1 THEN 
+                                            ABS(DAY(date) - 2)
+                                        ELSE 
+                                            ABS(DAY(date) - :targetDay)
+                                    END
+                            END ASC,
+                            date ASC
                     ) as rn
                 FROM fund_historical_values
                 WHERE code = :code 
@@ -198,22 +225,94 @@ class InvestmentAnalysisService {
                 code,
                 startDate: startDate.toISOString().split('T')[0],
                 endDate: endDate.toISOString().split('T')[0],
-                targetDay
+                targetDay,
+                isYearStart: isYearStart ? 1 : 0
             }
         });
     };
 
+    /**
+     * Belirli bir tarih aralığı için enflasyon verilerini getirir
+     */
+    private async getInflationData(startDate: Date, endDate: Date): Promise<Map<string, number>> {
+        const inflationRates = await InflationRate.findAll({
+            where: {
+                date: {
+                    [Op.between]: [startDate, endDate]
+                }
+            },
+            order: [['date', 'ASC']]
+        });
+
+        // YYYY-MM formatında key'e sahip Map oluştur
+        const monthlyRates = new Map<string, number>();
+        let lastKnownRate = 0;
+
+        inflationRates.forEach(rate => {
+            const date = new Date(rate.date);
+            const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            monthlyRates.set(key, rate.monthly_rate);
+            lastKnownRate = rate.monthly_rate;
+        });
+
+        // Eksik aylar için son bilinen enflasyon oranını kullan
+        const currentDate = new Date(endDate);
+        const startMonth = new Date(startDate);
+        
+        while (startMonth <= currentDate) {
+            const key = `${startMonth.getFullYear()}-${String(startMonth.getMonth() + 1).padStart(2, '0')}`;
+            if (!monthlyRates.has(key)) {
+                monthlyRates.set(key, lastKnownRate);
+            }
+            startMonth.setMonth(startMonth.getMonth() + 1);
+        }
+
+        return monthlyRates;
+    }
+
+    /**
+     * Nominal getiriyi reel getiriye çevirir
+     */
+    private calculateRealReturn(nominal: number, inflationRate: number): number {
+        // Reel getiri = ((1 + nominal) / (1 + enflasyon)) - 1
+        return ((1 + (nominal / 100)) / (1 + (inflationRate / 100)) - 1) * 100;
+    }
+
+    /**
+     * Nominal tutarı reel tutara çevirir
+     */
+    private calculateRealValue(nominal: number, inflationRate: number): number {
+        return nominal / (1 + (inflationRate / 100));
+    }
+
+    /**
+     * Kümülatif enflasyonu hesaplar
+     */
+    private calculateCumulativeInflation(
+        inflationRates: Map<string, number>,
+        currentMonth: string
+    ): number {
+        let cumulativeInflation = 0;
+        for (const [month, rate] of inflationRates.entries()) {
+            if (month <= currentMonth) {
+                cumulativeInflation = (1 + cumulativeInflation/100) * (1 + rate/100) * 100 - 100;
+            }
+        }
+        return cumulativeInflation;
+    }
+
     // Analiz hesapla
-    calculateAnalysis = (
+    calculateAnalysis = async (
         historicalData: FundHistoricalValue[],
         periodType: 'daily' | 'monthly',
         initialInvestment: number,
         monthlyInvestment: number,
+        startDateValue: Date,
         yearlyIncrease?: YearlyIncrease
-    ): {
+    ): Promise<{
         summary: InvestmentAnalysisSummary;
         periodDetails: PeriodDetail[];
-    } => {
+    }> => {
         const periodDetails: PeriodDetail[] = [];
         let totalInvestment = initialInvestment;
         let totalUnits = 0;
@@ -231,6 +330,10 @@ class InvestmentAnalysisService {
         const firstInvestmentDate = new Date(firstValue.date);
         const firstInvestmentDay = firstInvestmentDate.getDate();
         const firstInvestmentMonth = firstInvestmentDate.getMonth();
+
+        // Enflasyon verilerini al
+        const endDate = new Date();
+        const inflationRates = await this.getInflationData(startDateValue, endDate);
 
         // Her dönem için hesapla
         for (let i = 0; i < historicalData.length; i++) {
@@ -272,12 +375,28 @@ class InvestmentAnalysisService {
                 }
             }
 
-            // Değerleri hesapla
+            // Nominal değerleri hesapla
             const currentValue = totalUnits * current.value;
             const periodChange = prev ? currentValue - (totalUnits * prev.value) : 0;
             const periodChangePercentage = prev ? ((current.value - prev.value) / prev.value) * 100 : 0;
             const totalYield = currentValue - totalInvestment;
             const totalYieldPercentage = (totalYield / totalInvestment) * 100;
+
+            // Enflasyon hesaplamaları
+            const currentMonth = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+            const monthlyInflation = inflationRates.get(currentMonth) || 0;
+            const cumulativeInflation = this.calculateCumulativeInflation(inflationRates, currentMonth);
+
+            // Reel değerleri hesapla
+            const realPeriodChange = prev ? (
+                periodChange > 0 
+                    ? periodChange / (1 + monthlyInflation/100)  // Pozitif getiri: Enflasyon kazancı azaltır
+                    : periodChange * (1 + monthlyInflation/100)  // Negatif getiri: Enflasyon kaybı artırır
+            ) : 0;
+            const realPeriodChangePercentage = prev ? this.calculateRealReturn(periodChangePercentage, monthlyInflation) : 0;
+            const realCurrentValue = this.calculateRealValue(currentValue, cumulativeInflation);
+            const realTotalYield = prev ? realCurrentValue - totalInvestment : 0;
+            const realTotalYieldPercentage = prev ? (realTotalYield / totalInvestment) * 100 : 0;
 
             // Dönem detayını ekle
             periodDetails.push({
@@ -291,7 +410,13 @@ class InvestmentAnalysisService {
                 periodChange,
                 periodChangePercentage,
                 totalYield,
-                totalYieldPercentage
+                totalYieldPercentage,
+                monthlyInflation,
+                cumulativeInflation,
+                realPeriodChange,
+                realPeriodChangePercentage,
+                realTotalYield,
+                realTotalYieldPercentage
             });
         }
 
@@ -303,7 +428,10 @@ class InvestmentAnalysisService {
                 totalInvestment,
                 currentValue: lastDetail.value,
                 totalYield: lastDetail.totalYield,
-                totalYieldPercentage: lastDetail.totalYieldPercentage
+                totalYieldPercentage: lastDetail.totalYieldPercentage,
+                cumulativeInflation: lastDetail.cumulativeInflation,
+                realTotalYield: lastDetail.realTotalYield,
+                realTotalYieldPercentage: lastDetail.realTotalYieldPercentage
             },
             periodDetails
         };
@@ -332,14 +460,15 @@ class InvestmentAnalysisService {
             const periodType = this.getPeriodType(startDate);
 
             // Geçmiş verileri çek
-            const historicalData = await this.getHistoricalData(fundCode, startDateValue, periodType);
+            const historicalData = await this.getHistoricalData(fundCode, startDateValue, periodType, startDate);
 
             // Analizi hesapla
-            const analysis = this.calculateAnalysis(
+            const analysis = await this.calculateAnalysis(
                 historicalData,
                 periodType,
                 initialInvestment,
                 monthlyInvestment,
+                startDateValue,
                 yearlyIncrease
             );
 

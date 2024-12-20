@@ -22,6 +22,7 @@ import statisticsRoutes from './routes/statisticsRoutes';
 import fundTypeRoutes from './routes/fundTypeRoutes';
 import apiKeyRoutes from './routes/apiKeyRoutes';
 import apiLogRoutes from './routes/apiLogRoutes';
+import inflationRoutes from './routes/inflationRoutes';
 import { rateLimiter } from './middleware/rateLimiter';
 import { apiLogger } from './middleware/apiLogger';
 import redisClient from './config/redis';
@@ -74,13 +75,14 @@ const initializeApp = async () => {
         app.use('/api-logs', apiLogRoutes);
 
         // Global rate limiter'ı tüm API rotalarına uygula
-        app.use(['/funds', '/companies', '/statistics', '/fund-types'], rateLimiter);
+        app.use(['/funds', '/companies', '/statistics', '/fund-types', '/inflation'], rateLimiter);
 
         // Routes
         app.use('/funds', fundRoutes);
         app.use('/companies', companyRoutes);
         app.use('/statistics', statisticsRoutes);
         app.use('/fund-types', fundTypeRoutes);
+        app.use('/inflation', inflationRoutes);
 
         // Error handling
         app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

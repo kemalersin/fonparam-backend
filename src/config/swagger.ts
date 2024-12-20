@@ -20,6 +20,7 @@ Bu API ile fonların güncel ve geçmiş verilerine erişebilir, karşılaştır
 - 🔍 Gelişmiş filtreleme ve arama
 - 📊 Fon karşılaştırma
 - 🏢 Portföy yönetim şirketi bilgileri
+- 📈 Enflasyon verileri
 
 ## Rate Limiting
 
@@ -65,6 +66,10 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
             {
                 name: 'İstatistikler',
                 description: 'Günlük istatistikler ile ilgili operasyonlar'
+            },
+            {
+                name: 'Enflasyon',
+                description: 'Enflasyon oranları ile ilgili operasyonlar'
             }
         ],
         paths: {
@@ -867,7 +872,7 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                         {
                             name: 'sort',
                             in: 'query',
-                            description: 'Sıralama alanı',
+                            description: 'S��ralama alanı',
                             schema: {
                                 type: 'string',
                                 enum: ['date', 'value', 'aum', 'shares_active', 'yield', 'cumulative_cashflow', 'investor_count'],
@@ -1476,6 +1481,145 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                         },
                         '400': {
                             $ref: '#/components/responses/ValidationError'
+                        },
+                        '404': {
+                            $ref: '#/components/responses/NotFound'
+                        },
+                        '500': {
+                            $ref: '#/components/responses/ServerError'
+                        }
+                    }
+                }
+            },
+            '/inflation': {
+                get: {
+                    tags: ['Enflasyon'],
+                    summary: 'Enflasyon verilerini listeler',
+                    description: 'Tüm enflasyon verilerini listeler ve ay/yıl bazlı filtreleme imkanı sunar',
+                    parameters: [
+                        {
+                            name: 'month',
+                            in: 'query',
+                            description: 'Ay (1-12)',
+                            schema: {
+                                type: 'integer',
+                                minimum: 1,
+                                maximum: 12
+                            },
+                            example: 12
+                        },
+                        {
+                            name: 'year',
+                            in: 'query',
+                            description: 'Yıl',
+                            schema: {
+                                type: 'integer',
+                                minimum: 2000
+                            },
+                            example: 2023
+                        }
+                    ],
+                    responses: {
+                        '200': {
+                            description: 'Başarılı',
+                            content: {
+                                'application/json': {
+                                    schema: {
+                                        type: 'array',
+                                        items: {
+                                            $ref: '#/components/schemas/InflationRate'
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        '500': {
+                            $ref: '#/components/responses/ServerError'
+                        }
+                    }
+                }
+            },
+            '/inflation/latest': {
+                get: {
+                    tags: ['Enflasyon'],
+                    summary: 'Son enflasyon verisini getirir',
+                    description: 'En son aya ait enflasyon verilerini getirir',
+                    responses: {
+                        '200': {
+                            description: 'Başarılı',
+                            content: {
+                                'application/json': {
+                                    schema: {
+                                        $ref: '#/components/schemas/InflationRate'
+                                    }
+                                }
+                            }
+                        },
+                        '404': {
+                            $ref: '#/components/responses/NotFound'
+                        },
+                        '500': {
+                            $ref: '#/components/responses/ServerError'
+                        }
+                    }
+                }
+            },
+            '/inflation/{year}/{month}': {
+                get: {
+                    tags: ['Enflasyon'],
+                    summary: 'Belirli bir ay ve yıldaki enflasyon verisini getirir',
+                    description: 'Belirtilen ay ve yıla ait enflasyon verilerini getirir (ayın son günü)',
+                    parameters: [
+                        {
+                            name: 'year',
+                            in: 'path',
+                            required: true,
+                            description: 'Yıl',
+                            schema: {
+                                type: 'integer',
+                                minimum: 2000
+                            },
+                            example: 2023
+                        },
+                        {
+                            name: 'month',
+                            in: 'path',
+                            required: true,
+                            description: 'Ay (1-12)',
+                            schema: {
+                                type: 'integer',
+                                minimum: 1,
+                                maximum: 12
+                            },
+                            example: 12
+                        }
+                    ],
+                    responses: {
+                        '200': {
+                            description: 'Başarılı',
+                            content: {
+                                'application/json': {
+                                    schema: {
+                                        $ref: '#/components/schemas/InflationRate'
+                                    }
+                                }
+                            }
+                        },
+                        '400': {
+                            description: 'Geçersiz istek',
+                            content: {
+                                'application/json': {
+                                    schema: {
+                                        type: 'object',
+                                        properties: {
+                                            error: {
+                                                type: 'string',
+                                                example: 'Ay ve yıl parametreleri gerekli'
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         },
                         '404': {
                             $ref: '#/components/responses/NotFound'
@@ -2245,6 +2389,29 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                                     }
                                 }
                             }
+                        }
+                    }
+                },
+                InflationRate: {
+                    type: 'object',
+                    properties: {
+                        date: {
+                            type: 'string',
+                            format: 'date',
+                            description: 'Enflasyon tarihi',
+                            example: '2024-01-01'
+                        },
+                        monthly_rate: {
+                            type: 'number',
+                            format: 'decimal',
+                            description: 'Aylık enflasyon oranı (%)',
+                            example: 3.43
+                        },
+                        yearly_rate: {
+                            type: 'number',
+                            format: 'decimal',
+                            description: 'Yıllık enflasyon oranı (%)',
+                            example: 64.77
                         }
                     }
                 }

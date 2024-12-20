@@ -6,6 +6,7 @@ import Fund from './Fund';
 import FundType from './FundType';
 import DailyStatistics from './DailyStatistics';
 import FundTypeYields from './FundTypeYields';
+import InflationRate from './InflationRate';
 import sequelize from '../config/database';
 
 // İlişkileri tanımla
@@ -79,5 +80,6 @@ export {
     FundYield,
     FundHistoricalValue,
     DailyStatistics,
-    FundTypeYields
+    FundTypeYields,
+    InflationRate
 }; 
