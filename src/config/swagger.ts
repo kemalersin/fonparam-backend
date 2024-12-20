@@ -1740,7 +1740,7 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                         title: {
                             type: 'string',
                             description: 'Şirket adı',
-                            example: 'ATA PORTFÖY YÖNETİMİ A.��.'
+                            example: 'ATA PORTFÖY YÖNETİMİ A.Ş.'
                         },
                         logo: {
                             type: 'string',
