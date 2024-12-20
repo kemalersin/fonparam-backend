@@ -686,7 +686,7 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                                             title: {
                                                 type: 'string',
                                                 description: 'Fon adı',
-                                                example: 'ATA PORTFÖY BİRİNCİ HİSSE SENEDİ FONU'
+                                                example: 'ATA PORTFÖY ÇOKLU VARLIK DEĞİŞKEN FONU'
                                             },
                                             summary: {
                                                 type: 'object',
@@ -694,26 +694,41 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                                                     totalInvestment: {
                                                         type: 'number',
                                                         description: 'Toplam yatırım',
-                                                        example: 46000 // 10000 + (1000 * 36 ay)
+                                                        example: 21000
                                                     },
                                                     currentValue: {
                                                         type: 'number',
                                                         description: 'Güncel değer',
-                                                        example: 68432.50
+                                                        example: 27265.0760933796
                                                     },
                                                     totalYield: {
                                                         type: 'number',
                                                         description: 'Toplam getiri (tutar)',
-                                                        example: 22432.50
+                                                        example: 6265.076093379601
                                                     },
                                                     totalYieldPercentage: {
                                                         type: 'number',
                                                         description: 'Toplam getiri (%)',
-                                                        example: 48.77
+                                                        example: 29.833695682760002
+                                                    },
+                                                    cumulativeInflation: {
+                                                        type: 'number',
+                                                        description: 'Kümülatif enflasyon',
+                                                        example: 46.10242115919587
+                                                    },
+                                                    realTotalYield: {
+                                                        type: 'number',
+                                                        description: 'Gerçek toplam getiri (tutar)',
+                                                        example: -2338.38174819083
+                                                    },
+                                                    realTotalYieldPercentage: {
+                                                        type: 'number',
+                                                        description: 'Gerçek toplam getiri (%)',
+                                                        example: -11.135151181861096
                                                     }
                                                 }
                                             },
-                                            monthlyDetails: {
+                                            periodDetails: {
                                                 type: 'array',
                                                 items: {
                                                     type: 'object',
@@ -721,86 +736,128 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                                                         date: {
                                                             type: 'string',
                                                             description: 'Tarih',
-                                                            example: '2024-11-05'
+                                                            example: '2024-01-02'
                                                         },
                                                         investment: {
                                                             type: 'number',
                                                             description: 'O ay yapılan yatırım',
-                                                            example: 1331
+                                                            example: 0
                                                         },
                                                         totalInvestment: {
                                                             type: 'number',
                                                             description: 'O ana kadar yapılan toplam yatırım',
-                                                            example: 44669
+                                                            example: 10000
                                                         },
                                                         unitPrice: {
                                                             type: 'number',
                                                             description: 'Fon birim fiyatı',
-                                                            example: 12.123
+                                                            example: 16.276826
                                                         },
                                                         units: {
                                                             type: 'number',
                                                             description: 'O ay alınan pay adedi',
-                                                            example: 109.791
+                                                            example: 614.3703938347685
                                                         },
                                                         totalUnits: {
                                                             type: 'number',
                                                             description: 'Toplam pay adedi',
-                                                            example: 5350.120
+                                                            example: 614.3703938347685
                                                         },
                                                         value: {
                                                             type: 'number',
                                                             description: 'Yatırımın o ayki değeri',
-                                                            example: 64856.50
+                                                            example: 10000
                                                         },
-                                                        monthlyChange: {
+                                                        periodChange: {
                                                             type: 'number',
                                                             description: 'O ayki değişim (tutar)',
-                                                            example: 1567.89
+                                                            example: 0
                                                         },
-                                                        monthlyChangePercentage: {
+                                                        periodChangePercentage: {
                                                             type: 'number',
                                                             description: 'O ayki değişim (%)',
-                                                            example: 2.78
+                                                            example: 0
                                                         },
                                                         totalYield: {
                                                             type: 'number',
                                                             description: 'O ana kadarki toplam getiri (tutar)',
-                                                            example: 3576.12
+                                                            example: 0
                                                         },
                                                         totalYieldPercentage: {
                                                             type: 'number',
                                                             description: 'O ana kadarki toplam getiri (%)',
-                                                            example: 5.23
+                                                            example: 0
+                                                        },
+                                                        monthlyInflation: {
+                                                            type: 'number',
+                                                            description: 'Aylık enflasyon oranı (%)',
+                                                            example: 6.7
+                                                        },
+                                                        cumulativeInflation: {
+                                                            type: 'number',
+                                                            description: 'Kümülatif enflasyon',
+                                                            example: 6.699999999999989
+                                                        },
+                                                        realPeriodChange: {
+                                                            type: 'number',
+                                                            description: 'Gerçek o ayki değişim (tutar)',
+                                                            example: 868.1654684122489
+                                                        },
+                                                        realPeriodChangePercentage: {
+                                                            type: 'number',
+                                                            description: 'Gerçek o ayki değişim (%)',
+                                                            example: 3.6141517270277923
+                                                        },
+                                                        realTotalYield: {
+                                                            type: 'number',
+                                                            description: 'Gerçek o ayki getiri (tutar)',
+                                                            example: -392.61637150465504
+                                                        },
+                                                        realTotalYieldPercentage: {
+                                                            type: 'number',
+                                                            description: 'Gerçek o ayki getiri (%)',
+                                                            example: -3.5692397409514096
                                                         }
                                                     }
                                                 },
                                                 example: [
                                                     {
-                                                        date: '2024-11-05',
-                                                        investment: 1331,
-                                                        totalInvestment: 44669,
-                                                        unitPrice: 12.123,
-                                                        units: 109.791,
-                                                        totalUnits: 5350.120,
-                                                        value: 64856.50,
-                                                        monthlyChange: 1567.89,
-                                                        monthlyChangePercentage: 2.78,
-                                                        totalYield: 3576.12,
-                                                        totalYieldPercentage: 5.23
+                                                        date: '2024-01-02',
+                                                        investment: 0,
+                                                        totalInvestment: 10000,
+                                                        unitPrice: 16.276826,
+                                                        units: 614.3703938347685,
+                                                        totalUnits: 614.3703938347685,
+                                                        value: 10000,
+                                                        periodChange: 0,
+                                                        periodChangePercentage: 0,
+                                                        totalYield: 0,
+                                                        totalYieldPercentage: 0,
+                                                        monthlyInflation: 6.7,
+                                                        cumulativeInflation: 6.699999999999989,
+                                                        realPeriodChange: 0,
+                                                        realPeriodChangePercentage: 0,
+                                                        realTotalYield: 0,
+                                                        realTotalYieldPercentage: 0
                                                     },
                                                     {
-                                                        date: '2024-12-05',
-                                                        investment: 1331,
-                                                        totalInvestment: 46000,
-                                                        unitPrice: 12.543,
-                                                        units: 106.114,
-                                                        totalUnits: 5456.234,
-                                                        value: 68432.50,
-                                                        monthlyChange: 1234.56,
-                                                        monthlyChangePercentage: 2.45,
-                                                        totalYield: 4810.68,
-                                                        totalYieldPercentage: 7.68
+                                                        date: '2024-02-02',
+                                                        investment: 1000,
+                                                        totalInvestment: 11000,
+                                                        unitPrice: 17.629084,
+                                                        units: 56.724444673359095,
+                                                        totalUnits: 671.0948385081276,
+                                                        value: 11830.787280026216,
+                                                        periodChange: 907.4933641313237,
+                                                        periodChangePercentage: 8.307872800262158,
+                                                        totalYield: 830.7872800262157,
+                                                        totalYieldPercentage: 7.552611636601961,
+                                                        monthlyInflation: 4.53,
+                                                        cumulativeInflation: 11.533509999999978,
+                                                        realPeriodChange: 868.1654684122489,
+                                                        realPeriodChangePercentage: 3.6141517270277923,
+                                                        realTotalYield: -392.61637150465504,
+                                                        realTotalYieldPercentage: -3.5692397409514096
                                                     }
                                                 ]
                                             }
@@ -872,7 +929,7 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                         {
                             name: 'sort',
                             in: 'query',
-                            description: 'S��ralama alanı',
+                            description: 'Sıralama alanı',
                             schema: {
                                 type: 'string',
                                 enum: ['date', 'value', 'aum', 'shares_active', 'yield', 'cumulative_cashflow', 'investor_count'],
@@ -1683,7 +1740,7 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                         title: {
                             type: 'string',
                             description: 'Şirket adı',
-                            example: 'ATA PORTFÖY YÖNETİMİ A.Ş.'
+                            example: 'ATA PORTFÖY YÖNETİMİ A.��.'
                         },
                         logo: {
                             type: 'string',
