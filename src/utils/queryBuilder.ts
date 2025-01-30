@@ -70,6 +70,18 @@ export const buildFundFilters = (query: FundFilters): BaseFilters => {
         });
     }
 
+    // Risk değeri filtreleri
+    if (query.min_risk_value !== undefined) {
+        filters.push({ risk_value: { [Op.gte]: parseInt(query.min_risk_value.toString()) } });
+    }
+
+    if (query.max_risk_value !== undefined) {
+        filters.push({ risk_value: { 
+            ...(where.risk_value || {}),
+            [Op.lte]: parseInt(query.max_risk_value.toString())
+        } });
+    }
+
     // Getiri filtreleri
     ['yield_1d', 'yield_1w', 'yield_1m', 'yield_3m', 'yield_6m', 'yield_ytd', 'yield_1y', 'yield_3y', 'yield_5y'].forEach(field => {
         if (query[field]) {

@@ -37,6 +37,9 @@ const SORT_FIELDS = {
     code: ['code'],
     title: ['title'],
     tefas: ['tefas'],
+    risk_value: ['risk_value'],
+    purchase_value_day: ['purchase_value_day'],
+    sale_value_day: ['sale_value_day'],
 
     // FundYield alanları
     yield_1d: [{ model: FundYield, as: 'yield' }, 'yield_1d'],
@@ -74,6 +77,9 @@ const formatFundResponse = (fund: Fund) => {
         code: orgFund.code,
         title: orgFund.title,
         tefas: orgFund.tefas,
+        risk_value: orgFund.risk_value,
+        purchase_value_day: orgFund.purchase_value_day,
+        sale_value_day: orgFund.sale_value_day,
         yield_1d: orgFund.yield?.yield_1d,
         yield_1w: orgFund.yield?.yield_1w,
         yield_1m: orgFund.yield?.yield_1m,
@@ -115,7 +121,7 @@ export const listFunds = async (req: TypedRequest<FundFilters>, res: Response): 
             where: filters.where,
             limit: filters.limit,
             offset: filters.offset,
-            attributes: ['code', 'title', 'tefas'],
+            attributes: ['code', 'title', 'tefas', 'risk_value', 'purchase_value_day', 'sale_value_day'],
             include: [
                 INCLUDES.MANAGEMENT_COMPANY,
                 INCLUDES.FUND_TYPE,
@@ -142,7 +148,7 @@ export const getFundDetails = async (req: Request, res: Response): Promise<void>
 
         const fund = await Fund.findOne({
             where: { code },
-            attributes: ['code', 'title', 'tefas'],
+            attributes: ['code', 'title', 'tefas', 'risk_value', 'purchase_value_day', 'sale_value_day'],
             include: Object.values(INCLUDES),
         });
 
@@ -166,7 +172,22 @@ export const getFundHistoricalValues = async (req: Request, res: Response): Prom
         const order = (req.query.order?.toString() || 'DESC').toUpperCase() as 'ASC' | 'DESC';
 
         // Sıralama alanını kontrol et
-        const validSortFields = ['date', 'value', 'aum', 'shares_active', 'yield', 'cumulative_cashflow', 'investor_count'];
+        const validSortFields = [
+            'date', 
+            'value', 
+            'aum', 
+            'shares_active',
+            'shares_total',
+            'yield', 
+            'cumulative_cashflow', 
+            'investor_count',
+            'risk_value',
+            'purchase_value_day',
+            'sale_value_day',
+            'occupancy_rate',
+            'market_share'
+        ];
+
         if (!validSortFields.includes(sort as string)) {
             res.status(400).json({ error: 'Geçersiz sıralama alanı' });
             return;
@@ -188,10 +209,16 @@ export const getFundHistoricalValues = async (req: Request, res: Response): Prom
             date: value.date,
             value: value.value ? Number(value.value) : null,
             aum: value.aum ? Number(value.aum) : null,
-            shares_active: value.shares_active ? Number(value.shares_active) : null,
             yield: value.yield ? Number(value.yield) : null,
             cumulative_cashflow: value.cumulative_cashflow ? Number(value.cumulative_cashflow) : null,
-            investor_count: value.investor_count
+            investor_count: value.investor_count,
+            risk_value: value.risk_value,
+            purchase_value_day: value.purchase_value_day,
+            sale_value_day: value.sale_value_day,
+            shares_active: value.shares_active ? Number(value.shares_active) : null,
+            shares_total: value.shares_total ? Number(value.shares_total) : null,
+            occupancy_rate: value.occupancy_rate ? Number(value.occupancy_rate) : null,
+            market_share: value.market_share ? Number(value.market_share) : null
         }));
 
         res.json(transformedValues);

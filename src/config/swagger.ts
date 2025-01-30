@@ -371,6 +371,26 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                             }
                         },
                         {
+                            name: 'min_risk_value',
+                            in: 'query',
+                            description: 'Minimum risk seviyesi (1-7)',
+                            schema: {
+                                type: 'integer',
+                                minimum: 1,
+                                maximum: 7
+                            }
+                        },
+                        {
+                            name: 'max_risk_value',
+                            in: 'query',
+                            description: 'Maksimum risk seviyesi (1-7)',
+                            schema: {
+                                type: 'integer',
+                                minimum: 1,
+                                maximum: 7
+                            }
+                        },
+                        {
                             name: 'sort',
                             in: 'query',
                             description: 'Sıralama alanı',
@@ -381,6 +401,9 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                                     'code',
                                     'title',
                                     'tefas',
+                                    'risk_value',
+                                    'purchase_value_day',
+                                    'sale_value_day',
 
                                     // FundYield alanları
                                     'yield_1d',
@@ -885,66 +908,16 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                     description: 'Belirtilen fonun geçmiş birim pay değerlerini ve diğer finansal verilerini getirir. Veriler günlük, haftalık veya aylık olarak gruplanabilir.',
                     parameters: [
                         {
-                            name: 'code',
-                            in: 'path',
-                            description: 'Fon kodu',
-                            required: true,
-                            schema: {
-                                type: 'string',
-                                minLength: 2,
-                                maxLength: 10
-                            },
-                            example: 'AAK'
+                            $ref: '#/components/parameters/FundCode'
                         },
                         {
-                            name: 'start_date',
-                            in: 'query',
-                            description: 'Başlangıç tarihi (YYYY-MM-DD)',
-                            schema: {
-                                type: 'string',
-                                format: 'date'
-                            },
-                            example: '2023-01-01'
+                            $ref: '#/components/parameters/StartDate'
                         },
                         {
-                            name: 'end_date',
-                            in: 'query',
-                            description: 'Bitiş tarihi (YYYY-MM-DD)',
-                            schema: {
-                                type: 'string',
-                                format: 'date'
-                            },
-                            example: '2023-12-31'
+                            $ref: '#/components/parameters/EndDate'
                         },
                         {
-                            name: 'interval',
-                            in: 'query',
-                            description: 'Veri aralığı (günlük, haftalık veya aylık)',
-                            schema: {
-                                type: 'string',
-                                enum: ['daily', 'weekly', 'monthly'],
-                                default: 'daily'
-                            }
-                        },
-                        {
-                            name: 'sort',
-                            in: 'query',
-                            description: 'Sıralama alanı',
-                            schema: {
-                                type: 'string',
-                                enum: ['date', 'value', 'aum', 'shares_active', 'yield', 'cumulative_cashflow', 'investor_count'],
-                                default: 'date'
-                            }
-                        },
-                        {
-                            name: 'order',
-                            in: 'query',
-                            description: 'Sıralama yönü',
-                            schema: {
-                                type: 'string',
-                                enum: ['ASC', 'DESC'],
-                                default: 'DESC'
-                            }
+                            $ref: '#/components/parameters/Interval'
                         }
                     ],
                     responses: {
@@ -955,113 +928,35 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                                     schema: {
                                         type: 'array',
                                         items: {
-                                            type: 'object',
-                                            required: ['code', 'date', 'value'],
-                                            properties: {
-                                                code: {
-                                                    type: 'string',
-                                                    description: 'Fon kodu',
-                                                    example: 'AAK'
-                                                },
-                                                date: {
-                                                    type: 'string',
-                                                    format: 'date',
-                                                    description: 'Değer tarihi',
-                                                    example: '2023-12-14'
-                                                },
-                                                value: {
-                                                    type: 'number',
-                                                    format: 'float',
-                                                    description: 'Fon birim pay değeri',
-                                                    example: 12.345678
-                                                },
-                                                aum: {
-                                                    type: 'number',
-                                                    format: 'float',
-                                                    description: 'Portföy büyüklüğü',
-                                                    example: 123456789.12,
-                                                    nullable: true
-                                                },
-                                                shares_active: {
-                                                    type: 'number',
-                                                    format: 'float',
-                                                    description: 'Pay sayısı',
-                                                    example: 1234567.89,
-                                                    nullable: true
-                                                },
-                                                yield: {
-                                                    type: 'number',
-                                                    format: 'float',
-                                                    description: 'Günlük getiri (%)',
-                                                    example: 1.23,
-                                                    nullable: true
-                                                },
-                                                cumulative_cashflow: {
-                                                    type: 'number',
-                                                    format: 'float',
-                                                    description: 'Kümülatif nakit akışı',
-                                                    example: -12345.67,
-                                                    nullable: true
-                                                },
-                                                investor_count: {
-                                                    type: 'integer',
-                                                    description: 'Yatırımcı sayısı',
-                                                    example: 1234,
-                                                    nullable: true
-                                                }
+                                            $ref: '#/components/schemas/FundHistoricalValue'
+                                        },
+                                        example: [
+                                            {
+                                                "code": "AAK",
+                                                "date": "2023-12-14",
+                                                "value": 12.345678,
+                                                "aum": 123456789.12,
+                                                "yield": 1.23,
+                                                "cumulative_cashflow": -12345.67,
+                                                "investor_count": 1234,
+                                                "risk_value": 4,
+                                                "purchase_value_day": 1,
+                                                "sale_value_day": 2,
+                                                "shares_active": 1234567.89,
+                                                "shares_total": 2345678.90,
+                                                "occupancy_rate": 85.50,
+                                                "market_share": 2.75
                                             }
-                                        }
-                                    }
-                                }
-                            }
-                        },
-                        '400': {
-                            description: 'Geçersiz istek parametreleri',
-                            content: {
-                                'application/json': {
-                                    schema: {
-                                        type: 'object',
-                                        properties: {
-                                            error: {
-                                                type: 'string',
-                                                example: 'Geçersiz sıralama alanı'
-                                            }
-                                        }
+                                        ]
                                     }
                                 }
                             }
                         },
                         '404': {
-                            description: 'Fon bulunamadı',
-                            content: {
-                                'application/json': {
-                                    schema: {
-                                        type: 'object',
-                                        properties: {
-                                            error: {
-                                                type: 'string',
-                                                example: 'Belirtilen fon bulunamadı'
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                            $ref: '#/components/responses/NotFound'
                         },
                         '500': {
-                            description: 'Sunucu hatası',
-                            content: {
-                                'application/json': {
-                                    schema: {
-                                        type: 'object',
-                                        properties: {
-                                            error: {
-                                                type: 'string',
-                                                example: 'Geçmiş değerler getirilirken bir hata oluştu'
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                            $ref: '#/components/responses/ServerError'
                         }
                     }
                 }
@@ -1859,6 +1754,28 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                             description: 'Geçmiş veri kontrol tarihi',
                             example: '2023-12-14T10:00:00.000Z',
                             nullable: true
+                        },
+                        risk_value: {
+                            type: 'integer',
+                            minimum: 1,
+                            maximum: 7,
+                            description: 'Fonun risk seviyesi (1: En düşük risk, 7: En yüksek risk)',
+                            example: 4,
+                            nullable: true
+                        },
+                        purchase_value_day: {
+                            type: 'integer',
+                            minimum: 0,
+                            description: 'Alım valör günü',
+                            example: 1,
+                            nullable: true
+                        },
+                        sale_value_day: {
+                            type: 'integer',
+                            minimum: 0,
+                            description: 'Satım valör günü',
+                            example: 2,
+                            nullable: true
                         }
                     }
                 },
@@ -1985,6 +1902,14 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                             description: 'Fon kodu',
                             example: 'AAK'
                         },
+                        risk_value: {
+                            type: 'integer',
+                            minimum: 1,
+                            maximum: 7,
+                            description: 'Fonun risk seviyesi (1: En düşük risk, 7: En yüksek risk)',
+                            example: 4,
+                            nullable: true
+                        },
                         yield_1d: {
                             type: 'number',
                             format: 'float',
@@ -2078,13 +2003,6 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                             example: 123456789.12,
                             nullable: true
                         },
-                        shares_active: {
-                            type: 'number',
-                            format: 'float',
-                            description: 'Pay sayısı',
-                            example: 1234567.89,
-                            nullable: true
-                        },
                         yield: {
                             type: 'number',
                             format: 'float',
@@ -2103,6 +2021,56 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                             type: 'integer',
                             description: 'Yatırımcı sayısı',
                             example: 1234,
+                            nullable: true
+                        },
+                        risk_value: {
+                            type: 'integer',
+                            minimum: 1,
+                            maximum: 7,
+                            description: 'Fonun risk seviyesi (1: En düşük risk, 7: En yüksek risk)',
+                            example: 4,
+                            nullable: true
+                        },
+                        purchase_value_day: {
+                            type: 'integer',
+                            minimum: 0,
+                            description: 'Alım valör günü',
+                            example: 1,
+                            nullable: true
+                        },
+                        sale_value_day: {
+                            type: 'integer',
+                            minimum: 0,
+                            description: 'Satım valör günü',
+                            example: 2,
+                            nullable: true
+                        },
+                        shares_active: {
+                            type: 'number',
+                            format: 'float',
+                            description: 'Dolaşımdaki pay sayısı',
+                            example: 1234567.89,
+                            nullable: true
+                        },
+                        shares_total: {
+                            type: 'number',
+                            format: 'float',
+                            description: 'Toplam pay sayısı',
+                            example: 2345678.90,
+                            nullable: true
+                        },
+                        occupancy_rate: {
+                            type: 'number',
+                            format: 'float',
+                            description: 'Doluluk oranı (%)',
+                            example: 85.50,
+                            nullable: true
+                        },
+                        market_share: {
+                            type: 'number',
+                            format: 'float',
+                            description: 'Pazar payı (%)',
+                            example: 2.75,
                             nullable: true
                         }
                     }
@@ -2173,7 +2141,159 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                         data: {
                             type: 'array',
                             items: {
-                                $ref: '#/components/schemas/FundYield'
+                                type: 'object',
+                                properties: {
+                                    code: {
+                                        type: 'string',
+                                        description: 'Fon kodu',
+                                        example: 'AAK'
+                                    },
+                                    title: {
+                                        type: 'string',
+                                        description: 'Fon adı',
+                                        example: 'ATA PORTFÖY ÇOKLU VARLIK DEĞİŞKEN FONU'
+                                    },
+                                    tefas: {
+                                        type: 'boolean',
+                                        description: 'TEFAS\'ta işlem görüyor mu?',
+                                        example: true
+                                    },
+                                    risk_value: {
+                                        type: 'integer',
+                                        minimum: 1,
+                                        maximum: 7,
+                                        description: 'Fonun risk seviyesi (1: En düşük risk, 7: En yüksek risk)',
+                                        example: 4,
+                                        nullable: true
+                                    },
+                                    purchase_value_day: {
+                                        type: 'integer',
+                                        minimum: 0,
+                                        description: 'Alım valör günü',
+                                        example: 1,
+                                        nullable: true
+                                    },
+                                    sale_value_day: {
+                                        type: 'integer',
+                                        minimum: 0,
+                                        description: 'Satım valör günü',
+                                        example: 2,
+                                        nullable: true
+                                    },
+                                    yield_1d: {
+                                        type: 'number',
+                                        format: 'float',
+                                        description: '1 günlük getiri (%)',
+                                        example: 0.1068,
+                                        nullable: true
+                                    },
+                                    yield_1w: {
+                                        type: 'number',
+                                        format: 'float',
+                                        description: '1 haftalık getiri (%)',
+                                        example: 0.4476,
+                                        nullable: true
+                                    },
+                                    yield_1m: {
+                                        type: 'number',
+                                        format: 'float',
+                                        description: '1 aylık getiri (%)',
+                                        example: 3.7074,
+                                        nullable: true
+                                    },
+                                    yield_3m: {
+                                        type: 'number',
+                                        format: 'float',
+                                        description: '3 aylık getiri (%)',
+                                        example: 12.6185,
+                                        nullable: true
+                                    },
+                                    yield_6m: {
+                                        type: 'number',
+                                        format: 'float',
+                                        description: '6 aylık getiri (%)',
+                                        example: 10.4941,
+                                        nullable: true
+                                    },
+                                    yield_ytd: {
+                                        type: 'number',
+                                        format: 'float',
+                                        description: 'Yıl başından bugüne getiri (%)',
+                                        example: 4.5401,
+                                        nullable: true
+                                    },
+                                    yield_1y: {
+                                        type: 'number',
+                                        format: 'float',
+                                        description: '1 yıllık getiri (%)',
+                                        example: 45.501,
+                                        nullable: true
+                                    },
+                                    yield_3y: {
+                                        type: 'number',
+                                        format: 'float',
+                                        description: '3 yıllık getiri (%)',
+                                        example: 331.3934,
+                                        nullable: true
+                                    },
+                                    yield_5y: {
+                                        type: 'number',
+                                        format: 'float',
+                                        description: '5 yıllık getiri (%)',
+                                        example: 599.1105,
+                                        nullable: true
+                                    },
+                                    type: {
+                                        type: 'string',
+                                        description: 'Fon tipi',
+                                        example: 'Değişken Fon'
+                                    },
+                                    management_company: {
+                                        type: 'object',
+                                        properties: {
+                                            code: {
+                                                type: 'string',
+                                                description: 'Şirket kodu',
+                                                example: 'APY'
+                                            },
+                                            title: {
+                                                type: 'string',
+                                                description: 'Şirket adı',
+                                                example: 'ATA PORTFÖY YÖNETİMİ A.Ş.'
+                                            },
+                                            logo: {
+                                                type: 'string',
+                                                description: 'Şirket logosu URL',
+                                                example: 'http://192.168.45.105:3000/public/logos/ata_portfoy_icon.png'
+                                            }
+                                        }
+                                    },
+                                    fund_type: {
+                                        type: 'object',
+                                        properties: {
+                                            type: {
+                                                type: 'string',
+                                                description: 'Fon tipi kodu',
+                                                example: 'degisken'
+                                            },
+                                            short_name: {
+                                                type: 'string',
+                                                description: 'Fon tipi kısa adı',
+                                                example: 'Değişken Fon'
+                                            },
+                                            long_name: {
+                                                type: 'string',
+                                                description: 'Fon tipi uzun adı',
+                                                example: 'Değişken Şemsiye Fonu'
+                                            },
+                                            group_name: {
+                                                type: 'string',
+                                                description: 'Fon grubu adı',
+                                                example: 'Değişken Fonlar'
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }

@@ -12,6 +12,9 @@ class Fund extends Model {
     declare tefas: boolean;
     declare has_historical_data: boolean;
     declare historical_data_check_date: Date;
+    declare risk_value: number | null;
+    declare purchase_value_day: number | null;
+    declare sale_value_day: number | null;
     declare fund_type?: FundType;
     declare yield?: FundYield;
 }
@@ -50,6 +53,25 @@ Fund.init({
     historical_data_check_date: {
         type: DataTypes.DATE,
         allowNull: true
+    },
+    risk_value: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        validate: {
+            min: 1,
+            max: 7
+        },
+        comment: 'Fonun risk seviyesi (1-7 arası, 1: En düşük risk, 7: En yüksek risk)'
+    },
+    purchase_value_day: {
+        type: DataTypes.TINYINT,
+        allowNull: true,
+        comment: 'Alım valör günü'
+    },
+    sale_value_day: {
+        type: DataTypes.TINYINT,
+        allowNull: true,
+        comment: 'Satım valör günü'
     }
 }, {
     sequelize,
