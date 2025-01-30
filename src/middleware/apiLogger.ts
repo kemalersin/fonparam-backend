@@ -8,14 +8,14 @@ const whitelistedDomains = process.env.RATE_LIMIT_WHITELIST_DOMAINS?.split(',') 
 
 // IP'nin whitelist'te olup olmadığını kontrol et
 const isIpWhitelisted = (ip: string): boolean => {
-    const addr = ipaddr.parse(ip.trim());
-    
+    const addr: ipaddr.IPv4 = <ipaddr.IPv4>ipaddr.parse(ip.trim());
+
     return whitelistedIPs.some(whitelistedIp => {
         try {
             if (whitelistedIp.includes('/')) {
                 // CIDR notasyonu için kontrol
                 const [range, bits] = whitelistedIp.split('/');
-                const rangeAddr = ipaddr.parse(range);
+                const rangeAddr: ipaddr.IPv4 = <ipaddr.IPv4>ipaddr.parse(range);
                 return addr.match(rangeAddr, parseInt(bits));
             } else {
                 // Tek IP için kontrol
@@ -31,7 +31,7 @@ const isIpWhitelisted = (ip: string): boolean => {
 const isDomainWhitelisted = (req: Request): boolean => {
     const origin = req.get('origin');
     if (!origin) return false;
-    
+
     try {
         const hostname = new URL(origin).hostname;
         return whitelistedDomains.some(domain => hostname.endsWith(domain.trim()));
@@ -64,10 +64,10 @@ export const apiLogger = async (req: Request, res: Response, next: NextFunction)
     let isLogged = false;
 
     // IP adresini al
-    const ip = req.headers['x-forwarded-for'] || 
-               req.socket.remoteAddress || 
-               req.ip || 
-               'unknown';
+    const ip = req.headers['x-forwarded-for'] ||
+        req.socket.remoteAddress ||
+        req.ip ||
+        'unknown';
 
     // API key'i al
     const apiKey = req.header('X-API-Key');

@@ -97,6 +97,12 @@ const checkRateLimits = async (key: string): Promise<{ dailyCount: number; month
 const createRateLimiter = () => {
     return async (req: Request, res: Response, next: NextFunction) => {
         try {
+            // İşlem yapılıp yapılmadığını kontrol et
+            if ((req as any).rateLimitProcessed) {
+                return next();
+            }
+            (req as any).rateLimitProcessed = true;
+
             // Whitelist kontrolü
             const clientIp = getClientIp(req);
             if (isIpWhitelisted(clientIp) || isDomainWhitelisted(req)) {
