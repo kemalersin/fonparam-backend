@@ -5,15 +5,15 @@ class FundHistoricalValue extends Model {
     declare code: string;
     declare date: Date;
     declare value: number;
-    declare aum: number | null;
+    declare aum: number;
+    declare shares_active: number;    
+    declare shares_total: number | null;    
     declare yield: number | null;
     declare cumulative_cashflow: number | null;
     declare investor_count: number | null;
     declare risk_value: number | null;
-    declare purchase_value_day: number | null;
+    declare purchase_value_day: number | null;    
     declare sale_value_day: number | null;
-    declare shares_active: number | null;
-    declare shares_total: number | null;
     declare occupancy_rate: number | null;
     declare market_share: number | null;
 }

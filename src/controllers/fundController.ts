@@ -26,7 +26,21 @@ const INCLUDES = {
     LAST_HISTORICAL_VALUE: {
         model: FundHistoricalValue,
         as: 'last_historical_value',
-        attributes: ['date', 'value', 'aum', 'shares_active', 'cumulative_cashflow', 'investor_count'],
+        attributes: [
+            'date', 
+            'value', 
+            'aum', 
+            'yield',
+            'cumulative_cashflow', 
+            'investor_count',
+            'risk_value',
+            'purchase_value_day',
+            'sale_value_day',
+            'shares_active',
+            'shares_total',
+            'occupancy_rate',
+            'market_share'
+        ],
         required: false
     }
 };
@@ -240,7 +254,7 @@ export const compareFunds = async (req: Request, res: Response): Promise<void> =
 
         const funds = await Fund.findAll({
             where: { code: { [Op.in]: fundCodes } },
-            attributes: ['code', 'title', 'tefas'],
+            attributes: ['code', 'title', 'tefas', 'risk_value', 'purchase_value_day', 'sale_value_day'],
             include: Object.values(INCLUDES),
         });
 
