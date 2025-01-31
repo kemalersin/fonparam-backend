@@ -39,7 +39,8 @@ const INCLUDES = {
             'shares_active',
             'shares_total',
             'occupancy_rate',
-            'market_share'
+            'market_share',
+            'management_fee'
         ],
         required: false
     }
@@ -94,6 +95,7 @@ const formatFundResponse = (fund: Fund) => {
         risk_value: orgFund.risk_value,
         purchase_value_day: orgFund.purchase_value_day,
         sale_value_day: orgFund.sale_value_day,
+        management_fee: orgFund.management_fee,
         yield_1d: orgFund.yield?.yield_1d,
         yield_1w: orgFund.yield?.yield_1w,
         yield_1m: orgFund.yield?.yield_1m,
@@ -135,7 +137,7 @@ export const listFunds = async (req: TypedRequest<FundFilters>, res: Response): 
             where: filters.where,
             limit: filters.limit,
             offset: filters.offset,
-            attributes: ['code', 'title', 'tefas', 'risk_value', 'purchase_value_day', 'sale_value_day'],
+            attributes: ['code', 'title', 'tefas', 'risk_value', 'purchase_value_day', 'sale_value_day', 'management_fee'],
             include: [
                 INCLUDES.MANAGEMENT_COMPANY,
                 INCLUDES.FUND_TYPE,
@@ -162,7 +164,7 @@ export const getFundDetails = async (req: Request, res: Response): Promise<void>
 
         const fund = await Fund.findOne({
             where: { code },
-            attributes: ['code', 'title', 'tefas', 'risk_value', 'purchase_value_day', 'sale_value_day'],
+            attributes: ['code', 'title', 'tefas', 'risk_value', 'purchase_value_day', 'sale_value_day', 'management_fee'],
             include: Object.values(INCLUDES),
         });
 
@@ -199,7 +201,8 @@ export const getFundHistoricalValues = async (req: Request, res: Response): Prom
             'purchase_value_day',
             'sale_value_day',
             'occupancy_rate',
-            'market_share'
+            'market_share',
+            'management_fee'
         ];
 
         if (!validSortFields.includes(sort as string)) {
@@ -232,7 +235,8 @@ export const getFundHistoricalValues = async (req: Request, res: Response): Prom
             shares_active: value.shares_active ? Number(value.shares_active) : null,
             shares_total: value.shares_total ? Number(value.shares_total) : null,
             occupancy_rate: value.occupancy_rate ? Number(value.occupancy_rate) : null,
-            market_share: value.market_share ? Number(value.market_share) : null
+            market_share: value.market_share ? Number(value.market_share) : null,
+            management_fee: value.management_fee ? Number(value.management_fee) : null
         }));
 
         res.json(transformedValues);

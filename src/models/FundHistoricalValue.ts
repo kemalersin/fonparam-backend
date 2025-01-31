@@ -11,6 +11,7 @@ class FundHistoricalValue extends Model {
     declare yield: number | null;
     declare cumulative_cashflow: number | null;
     declare investor_count: number | null;
+    declare management_fee: number | null;    
     declare risk_value: number | null;
     declare purchase_value_day: number | null;    
     declare sale_value_day: number | null;
@@ -120,6 +121,15 @@ FundHistoricalValue.init({
         comment: 'Pazar payı (%)',
         get() {
             const value = this.getDataValue('market_share');
+            return value === null ? null : Number(value);
+        }
+    },
+    management_fee: {
+        type: DataTypes.DECIMAL(5, 2),
+        allowNull: true,
+        comment: 'Yönetim ücreti (%)',
+        get() {
+            const value = this.getDataValue('management_fee');
             return value === null ? null : Number(value);
         }
     }

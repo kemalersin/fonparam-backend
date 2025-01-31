@@ -15,6 +15,7 @@ class Fund extends Model {
     declare risk_value: number | null;
     declare purchase_value_day: number | null;
     declare sale_value_day: number | null;
+    declare management_fee: number | null;
     declare fund_type?: FundType;
     declare yield?: FundYield;
 }
@@ -72,6 +73,11 @@ Fund.init({
         type: DataTypes.TINYINT,
         allowNull: true,
         comment: 'Satım valör günü'
+    },
+    management_fee: {
+        type: DataTypes.DECIMAL(5, 2),
+        allowNull: true,
+        comment: 'Yönetim ücreti (%)'
     }
 }, {
     sequelize,

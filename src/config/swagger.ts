@@ -558,6 +558,12 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                                                     description: "TEFAS'ta işlem görme durumu",
                                                     example: true
                                                 },
+                                                management_fee: {
+                                                    type: 'float',
+                                                    description: 'Risk seviyesi (1-7)',
+                                                    example: 1.5,
+                                                    nullable: true
+                                                },                                                
                                                 risk_value: {
                                                     type: 'integer',
                                                     description: 'Risk seviyesi (1-7)',
@@ -708,27 +714,27 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                                                             type: 'number',
                                                             format: 'float',
                                                             description: 'Toplam portföy büyüklüğü',
-                                                            example: 1234567.89,
+                                                            example: 123456789.12,
                                                             nullable: true
                                                         },
                                                         yield: {
                                                             type: 'number',
                                                             format: 'float',
                                                             description: 'Günlük getiri (%)',
-                                                            example: 0.15,
+                                                            example: 1.23,
                                                             nullable: true
                                                         },
                                                         cumulative_cashflow: {
                                                             type: 'number',
                                                             format: 'float',
                                                             description: 'Kümülatif nakit akışı',
-                                                            example: 1000000.00,
+                                                            example: -12345.67,
                                                             nullable: true
                                                         },
                                                         investor_count: {
                                                             type: 'integer',
                                                             description: 'Yatırımcı sayısı',
-                                                            example: 1000,
+                                                            example: 1234,
                                                             nullable: true
                                                         },
                                                         risk_value: {
@@ -753,28 +759,35 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                                                             type: 'number',
                                                             format: 'float',
                                                             description: 'Aktif pay sayısı',
-                                                            example: 1000000.00,
+                                                            example: 1234567.89,
                                                             nullable: true
                                                         },
                                                         shares_total: {
                                                             type: 'number',
                                                             format: 'float',
                                                             description: 'Toplam pay sayısı',
-                                                            example: 1200000.00,
+                                                            example: 2345678.90,
                                                             nullable: true
                                                         },
                                                         occupancy_rate: {
                                                             type: 'number',
                                                             format: 'float',
                                                             description: 'Doluluk oranı (%)',
-                                                            example: 83.33,
+                                                            example: 85.50,
                                                             nullable: true
                                                         },
                                                         market_share: {
                                                             type: 'number',
                                                             format: 'float',
                                                             description: 'Pazar payı (%)',
-                                                            example: 1.25,
+                                                            example: 2.75,
+                                                            nullable: true
+                                                        },
+                                                        management_fee: {
+                                                            type: 'number',
+                                                            format: 'float',
+                                                            description: 'Yönetim ücreti (%)',
+                                                            example: 1.50,
                                                             nullable: true
                                                         }
                                                     }
@@ -1142,19 +1155,82 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                 get: {
                     tags: ['Fonlar'],
                     summary: 'Fonun geçmiş değerlerini getirir',
-                    description: 'Belirtilen fonun geçmiş birim pay değerlerini ve diğer finansal verilerini getirir. Veriler günlük, haftalık veya aylık olarak gruplanabilir.',
+                    description: 'Belirtilen fonun geçmiş değerlerini listeler',
                     parameters: [
                         {
-                            $ref: '#/components/parameters/FundCode'
+                            name: 'code',
+                            in: 'path',
+                            required: true,
+                            description: 'Fon kodu',
+                            schema: {
+                                type: 'string'
+                            },
+                            example: 'AAK'
                         },
                         {
-                            $ref: '#/components/parameters/StartDate'
+                            name: 'start_date',
+                            in: 'query',
+                            description: 'Başlangıç tarihi (YYYY-MM-DD)',
+                            schema: {
+                                type: 'string',
+                                format: 'date'
+                            },
+                            example: '2024-01-01'
                         },
                         {
-                            $ref: '#/components/parameters/EndDate'
+                            name: 'end_date',
+                            in: 'query',
+                            description: 'Bitiş tarihi (YYYY-MM-DD)',
+                            schema: {
+                                type: 'string',
+                                format: 'date'
+                            },
+                            example: '2024-03-19'
                         },
                         {
-                            $ref: '#/components/parameters/Interval'
+                            name: 'interval',
+                            in: 'query',
+                            description: 'Veri aralığı (günlük, haftalık veya aylık)',
+                            schema: {
+                                type: 'string',
+                                enum: ['daily', 'weekly', 'monthly'],
+                                default: 'daily'
+                            }
+                        },
+                        {
+                            name: 'sort',
+                            in: 'query',
+                            description: 'Sıralama alanı',
+                            schema: {
+                                type: 'string',
+                                enum: [
+                                    'date',
+                                    'value',
+                                    'aum',
+                                    'shares_active',
+                                    'shares_total',
+                                    'yield',
+                                    'cumulative_cashflow',
+                                    'investor_count',
+                                    'risk_value',
+                                    'purchase_value_day',
+                                    'sale_value_day',
+                                    'occupancy_rate',
+                                    'market_share',
+                                    'management_fee'
+                                ],
+                                default: 'date'
+                            }
+                        },
+                        {
+                            name: 'order',
+                            in: 'query',
+                            description: 'Sıralama yönü',
+                            schema: {
+                                type: 'string',
+                                enum: ['ASC', 'DESC'],
+                                default: 'DESC'
+                            }
                         }
                     ],
                     responses: {
@@ -1165,12 +1241,110 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                                     schema: {
                                         type: 'array',
                                         items: {
-                                            $ref: '#/components/schemas/FundHistoricalValue'
+                                            type: 'object',
+                                            properties: {
+                                                code: {
+                                                    type: 'string',
+                                                    description: 'Fon kodu'
+                                                },
+                                                date: {
+                                                    type: 'string',
+                                                    format: 'date',
+                                                    description: 'Tarih',
+                                                    example: '2024-03-19'
+                                                },
+                                                value: {
+                                                    type: 'number',
+                                                    format: 'float',
+                                                    description: 'Birim pay değeri',
+                                                    example: 12.345678
+                                                },
+                                                aum: {
+                                                    type: 'number',
+                                                    format: 'float',
+                                                    description: 'Toplam portföy büyüklüğü',
+                                                    example: 123456789.12,
+                                                    nullable: true
+                                                },
+                                                yield: {
+                                                    type: 'number',
+                                                    format: 'float',
+                                                    description: 'Günlük getiri (%)',
+                                                    example: 1.23,
+                                                    nullable: true
+                                                },
+                                                cumulative_cashflow: {
+                                                    type: 'number',
+                                                    format: 'float',
+                                                    description: 'Kümülatif nakit akışı',
+                                                    example: -12345.67,
+                                                    nullable: true
+                                                },
+                                                investor_count: {
+                                                    type: 'integer',
+                                                    description: 'Yatırımcı sayısı',
+                                                    example: 1234,
+                                                    nullable: true
+                                                },
+                                                risk_value: {
+                                                    type: 'integer',
+                                                    description: 'Risk seviyesi (1-7)',
+                                                    example: 4,
+                                                    nullable: true
+                                                },
+                                                purchase_value_day: {
+                                                    type: 'integer',
+                                                    description: 'Alım valör günü',
+                                                    example: 1,
+                                                    nullable: true
+                                                },
+                                                sale_value_day: {
+                                                    type: 'integer',
+                                                    description: 'Satım valör günü',
+                                                    example: 2,
+                                                    nullable: true
+                                                },
+                                                shares_active: {
+                                                    type: 'number',
+                                                    format: 'float',
+                                                    description: 'Aktif pay sayısı',
+                                                    example: 1234567.89,
+                                                    nullable: true
+                                                },
+                                                shares_total: {
+                                                    type: 'number',
+                                                    format: 'float',
+                                                    description: 'Toplam pay sayısı',
+                                                    example: 2345678.90,
+                                                    nullable: true
+                                                },
+                                                occupancy_rate: {
+                                                    type: 'number',
+                                                    format: 'float',
+                                                    description: 'Doluluk oranı (%)',
+                                                    example: 85.50,
+                                                    nullable: true
+                                                },
+                                                market_share: {
+                                                    type: 'number',
+                                                    format: 'float',
+                                                    description: 'Pazar payı (%)',
+                                                    example: 2.75,
+                                                    nullable: true
+                                                },
+                                                management_fee: {
+                                                    type: 'number',
+                                                    format: 'float',
+                                                    description: 'Yönetim ücreti (%)',
+                                                    example: 1.50,
+                                                    nullable: true
+                                                }
+                                            }
                                         },
                                         example: [
                                             {
                                                 "code": "AAK",
-                                                "date": "2023-12-14",
+                                                "date": "2024-03-19",
                                                 "value": 12.345678,
                                                 "aum": 123456789.12,
                                                 "yield": 1.23,
@@ -1182,7 +1356,8 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                                                 "shares_active": 1234567.89,
                                                 "shares_total": 2345678.90,
                                                 "occupancy_rate": 85.50,
-                                                "market_share": 2.75
+                                                "market_share": 2.75,
+                                                "management_fee": 1.50
                                             }
                                         ]
                                     }
@@ -2395,6 +2570,12 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                                         description: 'TEFAS\'ta işlem görüyor mu?',
                                         example: true
                                     },
+                                    management_fee: {
+                                        type: 'float',
+                                        description: 'Risk seviyesi (1-7)',
+                                        example: 1.5,
+                                        nullable: true
+                                    },                                       
                                     risk_value: {
                                         type: 'integer',
                                         minimum: 1,
@@ -2501,7 +2682,7 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                                             logo: {
                                                 type: 'string',
                                                 description: 'Şirket logosu URL',
-                                                example: 'http://192.168.45.105:3000/public/logos/ata_portfoy_icon.png'
+                                                example: 'https://api.fonparam.com/public/logos/ata_portfoy_icon.png'
                                             }
                                         }
                                     },
@@ -2638,7 +2819,7 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                         {
                             code: 'APY',
                             title: 'ATA PORTFÖY YÖNETİMİ A.Ş.',
-                            logo: 'ata_portfoy_icon.png',
+                            logo: 'https://api.fonparam.com/public/logos/ata_portfoy_icon.png',
                             total_funds: 22,
                             avg_yield_1d: -0.0042,
                             avg_yield_1w: 1.0066,
