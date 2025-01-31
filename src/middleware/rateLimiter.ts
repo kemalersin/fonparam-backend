@@ -54,12 +54,15 @@ const getClientIp = (req: Request): string => {
 };
 
 // API anahtarını request header'dan alan ve doğrulayan yardımcı fonksiyon
-const validateApiKey = async (req: Request): Promise<{ key: string; dailyLimit: number; monthlyLimit: number }> => {
+const validateApiKey = async (req: Request, allowAll: boolean = true): Promise<{ key: string; dailyLimit: number; monthlyLimit: number }> => {
     const apiKey = req.header('X-API-Key');
     
     if (!apiKey) {
-        // API key yoksa IP bazlı limit uygula
-        return { key: getClientIp(req), dailyLimit: 100, monthlyLimit: 3000 };
+        if (allowAll) {
+            return { key: getClientIp(req), dailyLimit: 100, monthlyLimit: 3000 };
+        } else {
+            throw new Error('API key is required');
+        }
     }
 
     const validatedKey = await ApiKeyService.validateKey(apiKey);

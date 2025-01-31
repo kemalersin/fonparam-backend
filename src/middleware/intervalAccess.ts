@@ -21,7 +21,7 @@ export const intervalAccessControl = async (req: Request, res: Response, next: N
 
             // API key kontrolü
             try {
-                await validateApiKey(req);
+                await validateApiKey(req, false);
                 return next();
             } catch (error) {
                 return res.status(403).json({
