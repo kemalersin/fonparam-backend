@@ -157,5 +157,8 @@ const createRateLimiter = () => {
     };
 };
 
+// Ortak kullanılabilecek metotları dışa aktar
+export { isIpWhitelisted, isDomainWhitelisted, getClientIp, validateApiKey };
+
 // Rate limiter middleware'ini dışa aktar
 export const rateLimiter = createRateLimiter(); 

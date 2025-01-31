@@ -15,6 +15,7 @@ import {
 } from '../middleware/validators';
 import { cacheMiddleware, CACHE_DURATIONS } from '../services/cacheService';
 import { rateLimiter } from '../middleware/rateLimiter';
+import { intervalAccessControl } from '../middleware/intervalAccess';
 
 const router = express.Router();
 
@@ -49,6 +50,7 @@ router.get(
     rateLimiter,
     validateFundCode,
     validateDateRange,
+    intervalAccessControl,
     cacheMiddleware(CACHE_DURATIONS.FUND_HISTORY),
     getFundHistoricalValues
 );

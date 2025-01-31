@@ -1190,11 +1190,11 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                         {
                             name: 'interval',
                             in: 'query',
-                            description: 'Veri aralığı (günlük, haftalık veya aylık)',
+                            description: 'Veri aralığı (daily ve weekly sadece API key sahipleri ve izin verilen IP adresleri için kullanılabilir)',
                             schema: {
                                 type: 'string',
                                 enum: ['daily', 'weekly', 'monthly'],
-                                default: 'daily'
+                                default: 'monthly'
                             }
                         },
                         {
