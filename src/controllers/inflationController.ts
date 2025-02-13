@@ -7,24 +7,18 @@ export const inflationController = {
     // Tüm enflasyon verilerini listele
     list: async (req: Request, res: Response) => {
         try {
-            const { month, year } = req.query;
+            const { start_date, end_date } = req.query;
             
             let whereClause: any = {};
             
-            // Ay ve yıl filtrelerini ekle
-            if (month || year) {
-                whereClause[Op.and] = [];
-                
-                if (month) {
-                    whereClause[Op.and].push(
-                        sequelize.where(sequelize.fn('MONTH', sequelize.col('date')), month)
-                    );
+            // Tarih filtrelerini ekle
+            if (start_date || end_date) {
+                whereClause.date = {};
+                if (start_date) {
+                    whereClause.date[Op.gte] = start_date;
                 }
-                
-                if (year) {
-                    whereClause[Op.and].push(
-                        sequelize.where(sequelize.fn('YEAR', sequelize.col('date')), year)
-                    );
+                if (end_date) {
+                    whereClause.date[Op.lte] = end_date;
                 }
             }
 

@@ -1859,28 +1859,27 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                 get: {
                     tags: ['Enflasyon'],
                     summary: 'Enflasyon verilerini listeler',
-                    description: 'Tüm enflasyon verilerini listeler ve ay/yıl bazlı filtreleme imkanı sunar',
+                    description: 'Belirtilen tarih aralığındaki tüm enflasyon verilerini listeler',
                     parameters: [
                         {
-                            name: 'month',
+                            name: 'start_date',
                             in: 'query',
-                            description: 'Ay (1-12)',
+                            description: 'Başlangıç tarihi (YYYY-MM-DD)',
                             schema: {
-                                type: 'integer',
-                                minimum: 1,
-                                maximum: 12
+                                type: 'string',
+                                format: 'date'
                             },
-                            example: 12
+                            example: '2024-01-01'
                         },
                         {
-                            name: 'year',
+                            name: 'end_date',
                             in: 'query',
-                            description: 'Yıl',
+                            description: 'Bitiş tarihi (YYYY-MM-DD)',
                             schema: {
-                                type: 'integer',
-                                minimum: 2000
+                                type: 'string',
+                                format: 'date'
                             },
-                            example: 2023
+                            example: '2024-03-19'
                         }
                     ],
                     responses: {
@@ -1891,7 +1890,47 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                                     schema: {
                                         type: 'array',
                                         items: {
-                                            $ref: '#/components/schemas/InflationRate'
+                                            type: 'object',
+                                            properties: {
+                                                date: {
+                                                    type: 'string',
+                                                    format: 'date',
+                                                    description: 'Tarih',
+                                                    example: '2024-03-01'
+                                                },
+                                                monthly_rate: {
+                                                    type: 'number',
+                                                    format: 'float',
+                                                    description: 'Aylık enflasyon oranı (%)',
+                                                    example: 4.53
+                                                },
+                                                yearly_rate: {
+                                                    type: 'number',
+                                                    format: 'float',
+                                                    description: 'Yıllık enflasyon oranı (%)',
+                                                    example: 67.07
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        '400': {
+                            description: 'Geçersiz istek',
+                            content: {
+                                'application/json': {
+                                    schema: {
+                                        type: 'object',
+                                        properties: {
+                                            error: {
+                                                type: 'string',
+                                                example: 'Geçersiz tarih aralığı'
+                                            },
+                                            message: {
+                                                type: 'string',
+                                                example: 'Başlangıç tarihi, bitiş tarihinden büyük olamaz'
+                                            }
                                         }
                                     }
                                 }
