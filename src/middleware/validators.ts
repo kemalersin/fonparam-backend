@@ -166,7 +166,7 @@ export const validateDateRange = [
         .isDate()
         .withMessage('Bitiş tarihi geçerli bir tarih olmalıdır')
         .custom((endDate: string, { req }) => {
-            const startDate = req.query.start_date;
+            const startDate = req.query?.start_date;
             if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
                 throw new Error('Başlangıç tarihi, bitiş tarihinden büyük olamaz');
             }
