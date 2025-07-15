@@ -21,7 +21,8 @@ const sequelize = new Sequelize(
         host: dbConfig.host,
         dialect: 'mysql',
         dialectOptions: {
-            charset: 'utf8mb4'
+            charset: 'utf8mb4',
+            timezone: 'local'
         },
         logging: process.env.NODE_ENV === 'development' ? console.log : false,
         pool: {

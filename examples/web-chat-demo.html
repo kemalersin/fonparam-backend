@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FonParam AI Yatırım Danışmanı</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .chat-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .chat-header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .chat-messages {
+            height: 400px;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            padding: 12px;
+            border-radius: 10px;
+            max-width: 70%;
+        }
+        
+        .user-message {
+            background: #3498db;
+            color: white;
+            margin-left: auto;
+        }
+        
+        .ai-message {
+            background: #ecf0f1;
+            color: #2c3e50;
+        }
+        
+        .function-call {
+            background: #f39c12;
+            color: white;
+            font-size: 0.9em;
+            margin: 5px 0;
+            padding: 8px;
+            border-radius: 5px;
+        }
+        
+        .chat-input {
+            display: flex;
+            padding: 20px;
+            border-top: 1px solid #ecf0f1;
+        }
+        
+        .chat-input input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ecf0f1;
+            border-radius: 25px;
+            outline: none;
+            font-size: 16px;
+        }
+        
+        .chat-input button {
+            margin-left: 10px;
+            padding: 12px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .chat-input button:hover {
+            background: #2980b9;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+        
+        .example-questions {
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        
+        .example-questions h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        
+        .example-btn {
+            background: #e9ecef;
+            border: 1px solid #dee2e6;
+            padding: 8px 12px;
+            margin: 5px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .example-btn:hover {
+            background: #3498db;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h1>🤖 FonParam AI Yatırım Danışmanı</h1>
+            <p>Türkiye'deki yatırım fonları hakkında sorularınızı sorun!</p>
+        </div>
+        
+        <div class="example-questions">
+            <h3>💡 Örnek Sorular:</h3>
+            <div class="example-btn" onclick="askQuestion('AAK fonu ile 10.000 TL başlangıç yatırımı yaparak aylık 1.000 TL düzenli yatırım yapsam ne olur?')">
+                AAK fonu yatırım analizi
+            </div>
+            <div class="example-btn" onclick="askQuestion('En iyi performans gösteren 3 fonu karşılaştır')">
+                Fon karşılaştırması
+            </div>
+            <div class="example-btn" onclick="askQuestion('Şu an fon piyasası nasıl? Altın fonları almaya değer mi?')">
+                Piyasa durumu
+            </div>
+            <div class="example-btn" onclick="askQuestion('Risk seviyesi düşük, uzun vadeli yatırım için hangi fonları önerirsin?')">
+                Yatırım önerisi
+            </div>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <div class="message ai-message">
+                👋 Merhaba! Ben FonParam AI yatırım danışmanınızım. Türkiye'deki yatırım fonları hakkında sorularınızı yanıtlayabilirim.
+                <br><br>
+                💼 Size şunlarda yardımcı olabilirim:
+                <br>• Fon analizi ve getiri hesaplaması
+                <br>• Portföy önerileri ve diversifikasyon
+                <br>• Piyasa trendleri ve timing analizi
+                <br>• Risk değerlendirmesi ve enflasyon etkisi
+            </div>
+        </div>
+        
+        <div class="chat-input">
+            <input type="text" id="messageInput" placeholder="Yatırım sorunuzu yazın..." onkeypress="handleKeyPress(event)">
+            <button onclick="sendMessage()">Gönder</button>
+        </div>
+    </div>
+
+    <script>
+        // FonParam MCP Server URL
+        const MCP_SERVER_URL = 'https://api.fonapram.com:3001';
+        
+        // Chat history
+        let conversationHistory = [];
+
+        function addMessage(content, isUser = false, functionCall = null) {
+            const messagesDiv = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'ai-message'}`;
+            
+            if (functionCall) {
+                messageDiv.innerHTML = `
+                    <div class="function-call">🔍 ${functionCall.name} analizi yapılıyor...</div>
+                    ${content}
+                `;
+            } else {
+                messageDiv.innerHTML = content.replace(/\n/g, '<br>');
+            }
+            
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function showLoading() {
+            const messagesDiv = document.getElementById('chatMessages');
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'message ai-message loading';
+            loadingDiv.id = 'loadingMessage';
+            loadingDiv.innerHTML = '🤖 Analiz yapıyorum...';
+            messagesDiv.appendChild(loadingDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function hideLoading() {
+            const loadingDiv = document.getElementById('loadingMessage');
+            if (loadingDiv) {
+                loadingDiv.remove();
+            }
+        }
+
+        async function callFonParamMCP(toolName, args) {
+            try {
+                const response = await fetch(`${MCP_SERVER_URL}/mcp/tools/${toolName}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        arguments: args,
+                        id: Date.now().toString()
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                return data.result.content[0].text;
+            } catch (error) {
+                console.error('FonParam MCP Error:', error);
+                return `Analiz hatası: ${error.message}`;
+            }
+        }
+
+        async function processMessage(userMessage) {
+            showLoading();
+            
+            // Simple intent detection (in real app, use proper NLP)
+            let response = '';
+            let functionCall = null;
+
+            try {
+                // Detect if user wants fund analysis
+                if (userMessage.match(/(analiz|yatırım|getiri|hesapla)/i) && userMessage.match(/([A-Z]{3}|fon)/i)) {
+                    // Extract fund code (simple regex - improve for production)
+                    const fundCodeMatch = userMessage.match(/([A-Z]{3})/);
+                    const fundCode = fundCodeMatch ? fundCodeMatch[1] : 'AAK';
+                    
+                    // Extract investment amounts (simple parsing)
+                    const initialMatch = userMessage.match(/(\d+(?:\.\d+)?)\s*(?:bin|k)?.*?(?:TL|lira)/i);
+                    const monthlyMatch = userMessage.match(/aylık.*?(\d+(?:\.\d+)?)\s*(?:bin|k)?.*?(?:TL|lira)/i);
+                    
+                    let initialInvestment = initialMatch ? parseFloat(initialMatch[1]) : 10000;
+                    let monthlyInvestment = monthlyMatch ? parseFloat(monthlyMatch[1]) : 1000;
+                    
+                    // Handle "bin" suffix
+                    if (userMessage.includes('bin') || userMessage.includes('k')) {
+                        if (initialInvestment < 100) initialInvestment *= 1000;
+                        if (monthlyInvestment < 100) monthlyInvestment *= 1000;
+                    }
+                    
+                    functionCall = { name: 'analyze_fund_investment' };
+                    const result = await callFonParamMCP('analyze_fund_investment', {
+                        fundCode: fundCode,
+                        initialInvestment: initialInvestment,
+                        monthlyInvestment: monthlyInvestment,
+                        startDate: 'last_3_years'
+                    });
+                    
+                    response = `📊 **${fundCode} Fonu Yatırım Analizi**\n\n${result}`;
+                    
+                } else if (userMessage.match(/(karşılaştır|en iyi|fon.*fon)/i)) {
+                    functionCall = { name: 'compare_funds' };
+                    const result = await callFonParamMCP('compare_funds', {
+                        fundCodes: ['AAK', 'DAH', 'PKF'],
+                        period: 'long_term'
+                    });
+                    
+                    response = `⚖️ **Fon Karşılaştırması**\n\n${result}`;
+                    
+                } else if (userMessage.match(/(piyasa|trend|durum|nasıl)/i)) {
+                    functionCall = { name: 'get_market_insights' };
+                    const result = await callFonParamMCP('get_market_insights', {
+                        timeframe: 'monthly',
+                        limit: 5
+                    });
+                    
+                    response = `📈 **Piyasa Durumu**\n\n${result}`;
+                    
+                } else {
+                    // General response without MCP call
+                    response = `Anladığım kadarıyla yatırım fonları hakkında bilgi almak istiyorsunuz. 
+                    
+Size şu konularda yardımcı olabilirim:
+
+🔍 **Fon Analizi**: Belirli bir fon kodunu (örn: AAK, DAH) vererek detaylı analiz
+📊 **Yatırım Hesaplama**: Başlangıç tutarı ve aylık yatırımlarla getiri projeksiyonu  
+⚖️ **Fon Karşılaştırması**: Birden fazla fonu karşılaştırarak en iyisini bulma
+📈 **Piyasa Durumu**: Güncel fon piyasası trendleri ve önerileri
+
+Daha spesifik bir soru sorabilir misiniz? Örneğin: "AAK fonu ile 10.000 TL yatırım yapsam ne olur?"`;
+                }
+            } catch (error) {
+                response = `Üzgünüm, şu anda teknik bir sorun yaşıyorum. Lütfen daha sonra tekrar deneyin.`;
+            }
+
+            hideLoading();
+            addMessage(response, false, functionCall);
+            
+            // Add to conversation history
+            conversationHistory.push(
+                { role: 'user', content: userMessage },
+                { role: 'assistant', content: response }
+            );
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (message === '') return;
+            
+            addMessage(message, true);
+            input.value = '';
+            
+            processMessage(message);
+        }
+
+        function askQuestion(question) {
+            const input = document.getElementById('messageInput');
+            input.value = question;
+            sendMessage();
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        // Initialize
+        document.getElementById('messageInput').focus();
+    </script>
+</body>
+</html> 

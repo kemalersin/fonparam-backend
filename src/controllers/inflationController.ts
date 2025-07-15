@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import { Op } from 'sequelize';
 import { InflationRate } from '../models';
-import sequelize from '../config/database';
 
 export const inflationController = {
     // Tüm enflasyon verilerini listele

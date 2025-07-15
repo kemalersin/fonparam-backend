@@ -27,6 +27,12 @@ import { rateLimiter } from './middleware/rateLimiter';
 import { apiLogger } from './middleware/apiLogger';
 import redisClient from './config/redis';
 
+// MCP imports (optional)
+import { initializeMcpServer, FonParamMcpServer } from './mcp/index';
+
+// Global MCP server instance
+let mcpServer: FonParamMcpServer | null = null;
+
 // Redis bağlantısını başlat ve bekle
 const initializeApp = async () => {
     try {
@@ -41,6 +47,25 @@ const initializeApp = async () => {
 
         await redisClient.connect();
         console.log('Redis bağlantısı başarılı');
+
+        // HTTP MCP Server'ı başlat (isteğe bağlı)
+        if (process.env.ENABLE_MCP_SERVER === 'true') {
+            try {
+                console.log('🔧 Initializing HTTP MCP Server...');
+                mcpServer = await initializeMcpServer();
+                
+                // HTTP MCP Server'ı ayrı portta başlat
+                const mcpPort = parseInt(process.env.MCP_PORT || '3001');
+                await mcpServer.start(mcpPort);
+                console.log(`✅ HTTP MCP Server running on port ${mcpPort}`);
+                console.log(`🔗 MCP Endpoints: http://localhost:${mcpPort}/mcp/info`);
+            } catch (mcpError) {
+                console.warn('⚠️ HTTP MCP Server initialization failed:', mcpError);
+                console.log('📝 Application will continue without MCP functionality');
+            }
+        } else {
+            console.log('📝 HTTP MCP Server disabled (set ENABLE_MCP_SERVER=true to enable)');
+        }
 
         const app = express();
 
@@ -100,7 +125,22 @@ const initializeApp = async () => {
 
         // Redis bağlantısını kapat
         process.on('SIGTERM', async () => {
-            await redisClient.quit();
+            console.log('🛑 Graceful shutdown initiated...');
+            
+            try {
+                // MCP Server'ı kapat
+                if (mcpServer) {
+                    console.log('🔧 Closing MCP Server...');
+                    await mcpServer.close();
+                }
+                
+                // Redis bağlantısını kapat
+                await redisClient.quit();
+                console.log('✅ Cleanup completed');
+            } catch (error) {
+                console.error('❌ Shutdown error:', error);
+            }
+            
             process.exit(0);
         });
 
