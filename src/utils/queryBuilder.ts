@@ -61,6 +61,10 @@ export const buildFundFilters = (query: FundFilters): BaseFilters => {
         filters.push({ tefas: query.tefas === 'true' });
     }
 
+    if (query.has_historical_data !== undefined) {
+        filters.push({ has_historical_data: query.has_historical_data === 'true' });
+    }
+
     if (query.code) {
         const codes = query.code.split(',').map(code => code.trim());
         filters.push({

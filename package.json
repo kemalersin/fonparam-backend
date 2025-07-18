@@ -12,9 +12,7 @@
     "build": "tsc",
     "test": "jest",
     "lint": "eslint . --ext .ts",
-    "lint:fix": "eslint . --ext .ts --fix",
-    "mcp-server": "ts-node-dev --respawn --transpile-only src/mcp.ts",
-    "mcp-build": "tsc && node dist/mcp.js"
+    "lint:fix": "eslint . --ext .ts --fix"
   },
   "keywords": [
     "fon",

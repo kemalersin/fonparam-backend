@@ -92,6 +92,7 @@ const formatFundResponse = (fund: Fund) => {
         code: orgFund.code,
         title: orgFund.title,
         tefas: orgFund.tefas,
+        has_historical_data: orgFund.has_historical_data,
         risk_value: orgFund.risk_value,
         purchase_value_day: orgFund.purchase_value_day,
         sale_value_day: orgFund.sale_value_day,
@@ -137,7 +138,7 @@ export const listFunds = async (req: TypedRequest<FundFilters>, res: Response): 
             where: filters.where,
             limit: filters.limit,
             offset: filters.offset,
-            attributes: ['code', 'title', 'tefas', 'risk_value', 'purchase_value_day', 'sale_value_day', 'management_fee'],
+            attributes: ['code', 'title', 'tefas', 'has_historical_data', 'risk_value', 'purchase_value_day', 'sale_value_day', 'management_fee'],
             include: [
                 INCLUDES.MANAGEMENT_COMPANY,
                 INCLUDES.FUND_TYPE,
@@ -164,7 +165,7 @@ export const getFundDetails = async (req: Request, res: Response): Promise<void>
 
         const fund = await Fund.findOne({
             where: { code },
-            attributes: ['code', 'title', 'tefas', 'risk_value', 'purchase_value_day', 'sale_value_day', 'management_fee'],
+            attributes: ['code', 'title', 'tefas', 'has_historical_data', 'risk_value', 'purchase_value_day', 'sale_value_day', 'management_fee'],
             include: Object.values(INCLUDES),
         });
 
@@ -258,7 +259,7 @@ export const compareFunds = async (req: Request, res: Response): Promise<void> =
 
         const funds = await Fund.findAll({
             where: { code: { [Op.in]: fundCodes } },
-            attributes: ['code', 'title', 'tefas', 'risk_value', 'purchase_value_day', 'sale_value_day'],
+            attributes: ['code', 'title', 'tefas', 'has_historical_data', 'risk_value', 'purchase_value_day', 'sale_value_day'],
             include: Object.values(INCLUDES),
         });
 
@@ -307,7 +308,7 @@ export const getTopPerformingFunds = async (req: Request, res: Response): Promis
                     code: { [Op.notIn]: referenceCodes },
                     tefas: true
                 },
-                attributes: ['code', 'title', 'tefas'],
+                attributes: ['code', 'title', 'tefas', 'has_historical_data'],
                 include: [
                     INCLUDES.MANAGEMENT_COMPANY,
                     INCLUDES.FUND_TYPE,
@@ -333,7 +334,7 @@ export const getTopPerformingFunds = async (req: Request, res: Response): Promis
             where: {
                 tefas: true
             },
-            attributes: ['code', 'title', 'tefas'],
+            attributes: ['code', 'title', 'tefas', 'has_historical_data'],
             include: [
                 INCLUDES.MANAGEMENT_COMPANY,
                 INCLUDES.FUND_TYPE,

@@ -103,6 +103,7 @@ export interface FundFilters extends ParsedQs {
     type?: string;
     management_company?: string;
     tefas?: string;
+    has_historical_data?: string;
     min_risk_value?: string;
     max_risk_value?: string;
     page?: string;

@@ -371,6 +371,14 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                             }
                         },
                         {
+                            name: 'has_historical_data',
+                            in: 'query',
+                            description: 'Tarihsel verisi olan fonları filtrele',
+                            schema: {
+                                type: 'boolean'
+                            }
+                        },
+                        {
                             name: 'min_risk_value',
                             in: 'query',
                             description: 'Minimum risk seviyesi (1-7)',
@@ -556,6 +564,11 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                                                 tefas: {
                                                     type: 'boolean',
                                                     description: "TEFAS'ta işlem görme durumu",
+                                                    example: true
+                                                },
+                                                has_historical_data: {
+                                                    type: 'boolean',
+                                                    description: 'Tarihsel verisi var mı?',
                                                     example: true
                                                 },
                                                 management_fee: {
@@ -2607,6 +2620,11 @@ Performansı artırmak için önbellek kullanılmaktadır (30 dakika).
                                     tefas: {
                                         type: 'boolean',
                                         description: 'TEFAS\'ta işlem görüyor mu?',
+                                        example: true
+                                    },
+                                    has_historical_data: {
+                                        type: 'boolean',
+                                        description: 'Tarihsel verisi var mı?',
                                         example: true
                                     },
                                     management_fee: {
